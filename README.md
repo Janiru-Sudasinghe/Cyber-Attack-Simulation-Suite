@@ -77,10 +77,10 @@ The suite follows a **static, client-only architecture** - a deliberate design c
 
 ```
 cyber-attack-simulation/
-├── simulations/
-│   ├── simulation-1/
+├── Simulations/
+│   ├── <attack-name-1>/
 │   │   └── index.html
-│   ├── simulation-2/
+│   ├── <attack-name-1>/
 │   │   └── index.html
 │   └── ...
 └── README.md
@@ -98,7 +98,7 @@ cd Cyber-Attack-Simulation-Suite
 Then simply open the desired HTML file in your browser, e.g.:
 
 ```bash
-open simulations/simulation-1/index.html
+open Simulations/<attack-name>/index.html
 ```
 
 Optionally, serve it locally for a more realistic experience:
