@@ -32,16 +32,6 @@ Typical use cases:
 - Portfolio pieces demonstrating front-end and security-concept skills
 - UI/UX reference for building real phishing-awareness platforms
 
-## 🎯 Simulations Included
-
-| Simulation | Description | Status |
-|---|---|---|
-| _Example: Fake Login Portal_ | Recreates a generic login page to illustrate phishing page design patterns | ✅ |
-| _Example: Suspicious Email Preview_ | Demonstrates a mock inbox view highlighting phishing red flags | ✅ |
-| _Add your simulation here_ | - | 🔲 |
-
-*(Replace the rows above with the actual simulations you upload.)*
-
 ## 🏗️ Architecture
 
 The suite follows a **static, client-only architecture** - a deliberate design choice that removes any possibility of real data capture or transmission.
