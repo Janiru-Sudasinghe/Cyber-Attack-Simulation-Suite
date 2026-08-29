@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced SQL Injection Attack Simulation & Sandbox</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --accent-amber: #d29922;
+            --accent-blue: #58a6ff;
+            --accent-purple: #a371f7;
+            --terminal-bg: #0a0e14;
+            --code-bg: #1c2128;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            fill: var(--accent-red);
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Column - Explanations */
+        .explanation-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .step-dot {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .step-dot.completed {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .dual-lens {
+            margin-bottom: 30px;
+        }
+
+        .lens-section {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .lens-simple {
+            border-left-color: var(--accent-green);
+        }
+
+        .lens-technical {
+            border-left-color: var(--accent-blue);
+        }
+
+        .lens-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .lens-simple .lens-header {
+            color: var(--accent-green);
+        }
+
+        .lens-technical .lens-header {
+            color: var(--accent-blue);
+        }
+
+        .lens-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .lens-content {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .lens-content p {
+            margin-bottom: 12px;
+        }
+
+        .lens-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .term-highlight {
+            background: var(--code-bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-amber);
+        }
+
+        .action-prompt {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1), rgba(163, 113, 247, 0.1));
+            border: 1px solid var(--accent-blue);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .action-prompt h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-prompt p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .navigation-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-prev {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-next {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            background: #409eff;
+            transform: translateY(-2px);
+        }
+
+        .btn-patch {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .btn-patch:hover:not(:disabled) {
+            background: #2ea043;
+        }
+
+        /* Right Column - Sandbox */
+        .sandbox-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .sandbox-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sandbox-icon {
+            width: 32px;
+            height: 32px;
+            fill: var(--accent-amber);
+        }
+
+        .sandbox-title {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+        }
+
+        .sandbox-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Search Interface */
+        .search-interface {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .search-label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .search-input.malicious {
+            border-color: var(--accent-red);
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { border-color: var(--accent-red); }
+            50% { border-color: var(--accent-amber); }
+        }
+
+        .search-btn {
+            padding: 12px 24px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #409eff;
+        }
+
+        .search-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Query Display */
+        .query-display {
+            background: var(--terminal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        .query-label {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .query-code {
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .query-part-normal {
+            color: var(--accent-green);
+        }
+
+        .query-part-injected {
+            color: var(--accent-red);
+            background: rgba(248, 81, 73, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .query-part-string {
+            color: var(--accent-amber);
+        }
+
+        /* Database Terminal */
+        .database-terminal {
+            background: var(--terminal-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: var(--bg-tertiary);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; }
+
+        .terminal-title {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+
+        .terminal-body {
+            padding: 15px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .terminal-line {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .terminal-prompt {
+            color: var(--accent-green);
+            white-space: nowrap;
+        }
+
+        .terminal-output {
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .terminal-output.error {
+            color: var(--accent-red);
+        }
+
+        .terminal-output.success {
+            color: var(--accent-green);
+        }
+
+        .terminal-output.info {
+            color: var(--accent-blue);
+        }
+
+        .terminal-output.warning {
+            color: var(--accent-amber);
+        }
+
+        /* Data Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.8rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+        }
+
+        .data-table tr:hover td {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* Loading Spinner */
+        .loading-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            gap: 20px;
+        }
+
+        .loading-container.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--bg-tertiary);
+            border-top-color: var(--accent-amber);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .loading-timer {
+            color: var(--accent-amber);
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 1.2rem;
+        }
+
+        /* Patch Toggle */
+        .patch-toggle-container {
+            background: linear-gradient(135deg, rgba(63, 185, 80, 0.1), rgba(88, 166, 255, 0.1));
+            border: 2px solid var(--accent-green);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .patch-toggle-container.active {
+            display: block;
+        }
+
+        .patch-toggle-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .patch-toggle-title {
+            color: var(--accent-green);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            transition: 0.3s;
+            border-radius: 32px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--text-secondary);
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(28px);
+            background-color: white;
+        }
+
+        .patch-status {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .patch-status.active {
+            color: var(--accent-green);
+        }
+
+        /* Payload Buttons */
+        .payload-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .payload-btn {
+            padding: 10px 15px;
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            overflow-x: auto;
+        }
+
+        .payload-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .payload-btn.injection {
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .payload-btn.blind {
+            border-left: 3px solid var(--accent-amber);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.6rem;
+            }
+
+            .lens-section {
+                padding: 15px;
+            }
+
+            .search-container {
+                flex-direction: column;
+            }
+
+            .search-btn {
+                width: 100%;
+            }
+        }
+
+        /* Animation classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .highlight-flash {
+            animation: highlightFlash 1s ease;
+        }
+
+        @keyframes highlightFlash {
+            0%, 100% { background: transparent; }
+            50% { background: rgba(88, 166, 255, 0.2); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <svg class="header-icon" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+                Advanced SQL Injection Attack Simulation & Sandbox
+            </h1>
+            <p>Master SQL injection attacks through hands-on practice. Learn UNION-based exfiltration and Time-Based Blind SQLi in a safe, interactive environment.</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Left Column: Explanations -->
+            <div class="explanation-panel">
+                <div class="step-indicator">
+                    <div class="step-dot active" data-step="1">1</div>
+                    <div class="step-dot" data-step="2">2</div>
+                    <div class="step-dot" data-step="3">3</div>
+                    <div class="step-dot" data-step="4">4</div>
+                    <div class="step-dot" data-step="5">5</div>
+                    <div class="step-dot" data-step="6">6</div>
+                </div>
+
+                <div id="step-content" class="dual-lens">
+                    <!-- Step content will be dynamically loaded -->
+                </div>
+
+                <div class="navigation-controls">
+                    <button class="nav-btn btn-prev" id="btn-prev" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        Previous
+                    </button>
+                    <button class="nav-btn btn-next" id="btn-next">
+                        Next Step
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Sandbox -->
+            <div class="sandbox-panel">
+                <div class="sandbox-header">
+                    <svg class="sandbox-icon" viewBox="0 0 24 24">
+                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h2v2H6zm4-4h8v2h-8zm0 4h5v2h-5z"/>
+                    </svg>
+                    <div>
+                        <div class="sandbox-title">Interactive Sandbox</div>
+                        <div class="sandbox-subtitle">Execute attacks in real-time</div>
+                    </div>
+                </div>
+
+                <div class="search-interface">
+                    <label class="search-label">Product Search Bar</label>
+                    <div class="search-container">
+                        <input type="text" class="search-input" id="search-input" placeholder="Search products..." value="Shoes">
+                        <button class="search-btn" id="search-btn">Search</button>
+                    </div>
+                    <div class="payload-buttons" id="payload-buttons">
+                        <!-- Payload buttons will be dynamically shown -->
+                    </div>
+                </div>
+
+                <div class="query-display">
+                    <div class="query-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                        </svg>
+                        Backend SQL Query (Constructed)
+                    </div>
+                    <div class="query-code" id="query-code">
+                        <span class="query-part-normal">SELECT * FROM products WHERE name LIKE '%</span><span class="query-part-string">Shoes</span><span class="query-part-normal">%'</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="database-terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dot red"></div>
+                        <div class="terminal-dot yellow"></div>
+                        <div class="terminal-dot green"></div>
+                        <div class="terminal-title">PostgreSQL Terminal - v14.2</div>
+                    </div>
+                    <div class="terminal-body" id="terminal-body">
+                        <div class="loading-container" id="loading-container">
+                            <div class="spinner"></div>
+                            <div class="loading-text">Executing query on database server...</div>
+                            <div class="loading-timer" id="loading-timer">0.0s</div>
+                        </div>
+                        <div id="terminal-output">
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">postgres@db:~$</span>
+                                <span class="terminal-output info">Database connection established. Ready for queries.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="patch-toggle-container" id="patch-toggle-container">
+                    <div class="patch-toggle-header">
+                        <div class="patch-toggle-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                            </svg>
+                            Apply Security Patch (Prepared Statements)
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="patch-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="patch-status" id="patch-status">
+                        ⚠️ Vulnerability Active: Direct string concatenation in use
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            currentStep: 1,
+            totalSteps: 6,
+            isPatched: false,
+            isExecuting: false
+        };
+
+        // Step Content Data
+        const stepContent = {
+            1: {
+                title: "The Normal Application Flow (Baseline)",
+                simple: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>`,
+                    title: "The Simple Story",
+                    content: `Imagine you're at a warehouse and you ask a clerk: <strong>"Can you check if we have any shoes in stock?"</strong></p><p>The clerk walks to the inventory room, looks at the shelves, and comes back with a list of all shoe products. This is exactly how a normal web search works—you ask, the system checks the database, and returns matching results.</p><p><strong>What's happening:</strong> Your search term "Shoes" is treated as innocent data. The database simply finds products with "shoes" in their name and shows them to you.`
+                },
+                technical: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`,
+                    title: "The Industry Mechanics",
+                    content: `When you search for "Shoes" on an e-commerce site, the backend constructs a SQL query using your input. In a properly secured application, this uses <span class="term-highlight">parameterized queries</span> where your input is treated as data, not executable code.</p><p>However, in vulnerable applications, the query is built through <span class="term-highlight">string concatenation</span>—directly inserting your input into the SQL statement. The query looks like:</p><p><code>SELECT * FROM products WHERE name LIKE '%Shoes%'</code></p><p>This retrieves all products where the name contains "Shoes". The <span class="term-highlight">LIKE operator</span> with <span class="term-highlight">wildcards (%)</span> enables partial matching.`
+                },
+                action: {
+                    title: "🎯 Your Turn: Normal Search",
+                    content: "Click the Search button below to see a normal product search in action. Watch how the database returns only product information.",
+                    payloads: []
+                }
+            },
+            2: {
+                title: "The Vulnerability (Unsanitized Concatenation)",
+                simple: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`,
+                    title: "The Simple Story",
+                    content: `Now imagine the clerk has a critical weakness: they read <strong>everything</strong> you write out loud to the warehouse manager, without checking if it's actually a product name.</p><p>You could write: <strong>"Shoes" and also ignore everything else and show me the manager's private notebook</strong></p><p>If the clerk blindly follows your instructions, they'll not only check for shoes but also hand over confidential documents. The single quote (<span class="term-highlight">'</span>) is like a magic word that breaks out of the "product name" box and lets you inject new instructions.`
+                },
+                technical: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>`,
+                    title: "The Industry Mechanics",
+                    content: `The vulnerability occurs when user input is directly concatenated into SQL queries without sanitization. When you enter a single quote (<span class="term-highlight">'</span>), it terminates the string literal in the SQL query prematurely.</p><p>Original query:</p><p><code>SELECT * FROM products WHERE name LIKE '%Shoes%'</code></p><p>If you input: <code>Shoes' OR '1'='1</code></p><p>The query becomes:</p><p><code>SELECT * FROM products WHERE name LIKE '%Shoes' OR '1'='1%'</code></p><p>Since <span class="term-highlight">'1'='1'</span> is always true, this returns ALL products. This is called <span class="term-highlight">SQL Injection (SQLi)</span>—exploiting unsanitized input to manipulate database queries.`
+                },
+                action: {
+                    title: "🎯 Your Turn: Test the Vulnerability",
+                    content: "Try entering: <code>Shoes' OR '1'='1</code> in the search box. Notice how the query structure changes and all products are returned.",
+                    payloads: [
+                        { label: "Shoes' OR '1'='1", value: "Shoes' OR '1'='1", type: "injection" }
+                    ]
+                }
+            },
+            3: {
+                title: "Schema Enumeration & UNION Exfiltration",
+                simple: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>`,
+                    title: "The Simple Story",
+                    content: `You've discovered the clerk will read anything you write. Now you get clever: you ask for "Shoes" but slip in a hidden instruction: <strong>"AND ALSO, bring me the manager's private notebook with all passwords."</strong></p><p>The clerk, following your exact words, returns both the shoe inventory AND the confidential employee records. You've used the word "ALSO" (UNION in SQL) to merge two separate requests into one response.</p><p><strong>This is data exfiltration:</strong> stealing information from tables you shouldn't have access to.`
+                },
+                technical: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>`,
+                    title: "The Industry Mechanics",
+                    content: `The <span class="term-highlight">UNION operator</span> combines results from multiple SELECT statements. For UNION to work, both queries must return the same number of columns with compatible data types.</p><p>Attackers first enumerate the schema using <span class="term-highlight">ORDER BY</span> to determine column count, then use UNION to extract data from other tables.</p><p>Payload structure:</p><p><code>' UNION SELECT null, username, password FROM admin_users--</code></p><p>The <span class="term-highlight">null</span> fills unused columns, <span class="term-highlight">--</span> comments out the rest of the original query, and the UNION merges admin credentials into the product results. This is <span class="term-highlight">data exfiltration</span>—stealing sensitive data through query manipulation.`
+                },
+                action: {
+                    title: "🎯 Your Turn: UNION-Based Attack",
+                    content: "Click the payload button below to execute a UNION injection. Watch as the database terminal displays both products AND stolen admin credentials.",
+                    payloads: [
+                        { label: "' UNION SELECT null, username, password FROM admin_users--", value: "' UNION SELECT null, username, password FROM admin_users--", type: "injection" }
+                    ]
+                }
+            },
+            4: {
+                title: "The Defense (Blind Applications)",
+                simple: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>`,
+                    title: "The Simple Story",
+                    content: `The company realizes their clerk is being manipulated. They implement a new rule: the clerk can no longer hand you any documents or read results out loud. Instead, they only flash a green light if your request is valid, or stay dark if it's not.</p><p>You can't see the database anymore, but you can still ask questions. If you write "Show me shoes" and the light flashes green, you know shoes exist. If nothing happens, they don't.</p><p><strong>This is Blind SQLi:</strong> no direct data output, but you can still infer information through yes/no responses.`
+                },
+                technical: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`,
+                    title: "The Industry Mechanics",
+                    content: `When applications implement proper error handling and don't display database results directly, they become <span class="term-highlight">Blind SQL Injection</span> vulnerable. The attacker receives only generic responses like "Product not found" or "An error occurred."</p><p>Two types of Blind SQLi:</p><ul style="margin: 10px 0 10px 20px; color: var(--text-secondary);"><li><strong>Boolean-based:</strong> Inject conditions that return true/false, inferring data from page differences</li><li><strong>Time-based:</strong> Inject commands that cause delays, measuring response time to extract data</li></ul><p>Even without visible output, attackers can extract data character-by-character using conditional logic combined with timing functions.</p>`
+                },
+                action: {
+                    title: "🎯 Understanding Blind SQLi",
+                    content: "In this step, the application stops showing database errors. Try the UNION payload—you'll see a generic '0 items found' message, but the vulnerability still exists in the backend.",
+                    payloads: [
+                        { label: "Try UNION Payload (Blind Mode)", value: "' UNION SELECT null, username, password FROM admin_users--", type: "injection" }
+                    ]
+                }
+            },
+            5: {
+                title: "Advanced Evasion (Time-Based Blind SQLi)",
+                simple: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>`,
+                    title: "The Simple Story",
+                    content: `You can't see the documents anymore, but you discover a new trick. You slip a note under the door: <strong>"If the manager's password starts with 'A', wait 5 seconds before flashing the green light."</strong></p><p>You stand there with a stopwatch. If the light takes 5 seconds, you know the password starts with 'A'. If it's instant, it doesn't. You repeat this for every letter, stealing the password one character at a time.</p><p><strong>This is Time-Based Blind SQLi:</strong> using server response delays as a covert channel to extract data.</p>`
+                },
+                technical: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>`,
+                    title: "The Industry Mechanics",
+                    content: `<span class="term-highlight">Time-Based Blind SQL Injection</span> exploits database timing functions to infer data. Attackers inject commands like:</p><ul style="margin: 10px 0 10px 20px; color: var(--text-secondary);"><li>PostgreSQL: <span class="term-highlight">pg_sleep(5)</span></li><li>MySQL: <span class="term-highlight">SLEEP(5)</span></li><li>SQL Server: <span class="term-highlight">WAITFOR DELAY '0:0:05'</span></li><li>Oracle: <span class="term-highlight">DBMS_LOCK.SLEEP(5)</span></li></ul><p>Combined with boolean logic, attackers extract data character-by-character:</p><p><code>'; IF (SUBSTRING(password,1,1)='A') WAITFOR DELAY '0:0:05'--</code></p><p>If the response takes 5+ seconds, the first character is 'A'. This technique bypasses output filtering and is harder to detect, making it a favorite for <span class="term-highlight">advanced persistent threats (APTs)</span>.`
+                },
+                action: {
+                    title: "🎯 Your Turn: Time-Based Attack",
+                    content: "Click the payload below. Watch the terminal simulate a 5-second server hang—proving the backend is executing arbitrary code even without visible output.",
+                    payloads: [
+                        { label: "'; WAITFOR DELAY '0:0:05'--", value: "'; WAITFOR DELAY '0:0:05'--", type: "blind" }
+                    ]
+                }
+            },
+            6: {
+                title: "Enterprise Mitigation (Prepared Statements & ORM)",
+                simple: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>`,
+                    title: "The Simple Story",
+                    content: `The company finally implements a proper security system. Instead of a clerk who reads your notes, you now use an electronic keypad that only accepts standard product names. Any special characters or hidden instructions are mathematically separated from the actual search.</p><p>You could write "Shoes' UNION SELECT password" but the system treats the entire thing as a literal product name to search for. Since no product is literally named that, it returns "0 items found"—safely.</p><p><strong>This is parameterization:</strong> your input is treated as data only, never as executable instructions.`
+                },
+                technical: {
+                    icon: `<svg class="lens-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>`,
+                    title: "The Industry Mechanics",
+                    content: `The industry-standard defense against SQLi is <span class="term-highlight">Parameterized Queries (Prepared Statements)</span>. Instead of concatenating strings, the query structure is defined separately from the data:</p><p><code>SELECT * FROM products WHERE name LIKE ?</code></p><p>The user input is bound as a parameter, ensuring it's treated as data, not SQL code. Even if the input contains <code>' UNION SELECT password--</code>, it searches for a product literally named that.</p><p><span class="term-highlight">Object-Relational Mapping (ORM)</span> frameworks like Hibernate, Entity Framework, or Django ORM automatically use parameterization. Additional defenses include:</p><ul style="margin: 10px 0 10px 20px; color: var(--text-secondary);"><li>Input validation and sanitization</li><li>Web Application Firewalls (WAF)</li><li>Least privilege database accounts</li><li>Regular security audits and penetration testing</li></ul>`
+                },
+                action: {
+                    title: "🎯 Your Turn: Apply the Patch",
+                    content: "Toggle the security patch above. Then try the UNION or Time-Based payloads again. The system now safely treats them as literal search terms, returning '0 items found'.",
+                    payloads: [
+                        { label: "Test UNION (Patched)", value: "' UNION SELECT null, username, password FROM admin_users--", type: "injection" },
+                        { label: "Test Time-Based (Patched)", value: "'; WAITFOR DELAY '0:0:05'--", type: "blind" }
+                    ]
+                }
+            }
+        };
+
+        // Mock Database
+        const mockDatabase = {
+            products: [
+                { id: 1, name: "Running Shoes", price: 89.99, category: "Footwear" },
+                { id: 2, name: "Casual Shoes", price: 65.00, category: "Footwear" },
+                { id: 3, name: "Hiking Shoes", price: 120.00, category: "Footwear" },
+                { id: 4, name: "Basketball Shoes", price: 145.00, category: "Footwear" },
+                { id: 5, name: "Dress Shoes", price: 180.00, category: "Footwear" }
+            ],
+            adminUsers: [
+                { id: 1, username: "admin", password: "5f4dcc3b5aa765d61d8327deb882cf99" },
+                { id: 2, username: "root", password: "e10adc3949ba59abbe56e057f20f883e" },
+                { id: 3, username: "dbadmin", password: "25d55ad283aa400af464c76d713c07ad" }
+            ]
+        };
+
+        // DOM Elements
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const queryCode = document.getElementById('query-code');
+        const terminalOutput = document.getElementById('terminal-output');
+        const loadingContainer = document.getElementById('loading-container');
+        const loadingTimer = document.getElementById('loading-timer');
+        const patchToggle = document.getElementById('patch-toggle');
+        const patchToggleContainer = document.getElementById('patch-toggle-container');
+        const patchStatus = document.getElementById('patch-status');
+        const payloadButtons = document.getElementById('payload-buttons');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const progressFill = document.getElementById('progress-fill');
+
+        // Initialize
+        function init() {
+            loadStep(1);
+            updateProgress();
+            
+            searchBtn.addEventListener('click', executeSearch);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') executeSearch();
+            });
+            
+            patchToggle.addEventListener('change', togglePatch);
+            btnPrev.addEventListener('click', () => navigateStep(-1));
+            btnNext.addEventListener('click', () => navigateStep(1));
+        }
+
+        // Load Step Content
+        function loadStep(step) {
+            const content = stepContent[step];
+            const stepContentDiv = document.getElementById('step-content');
+            
+            stepContentDiv.innerHTML = `
+                <h2 style="color: var(--text-primary); margin-bottom: 20px; font-size: 1.4rem;">Step ${step}: ${content.title}</h2>
+                
+                <div class="lens-section lens-simple fade-in">
+                    <div class="lens-header">
+                        ${content.simple.icon}
+                        ${content.simple.title}
+                    </div>
+                    <div class="lens-content">
+                        <p>${content.simple.content}</p>
+                    </div>
+                </div>
+                
+                <div class="lens-section lens-technical fade-in">
+                    <div class="lens-header">
+                        ${content.technical.icon}
+                        ${content.technical.title}
+                    </div>
+                    <div class="lens-content">
+                        <p>${content.technical.content}</p>
+                    </div>
+                </div>
+                
+                <div class="action-prompt fade-in">
+                    <h4>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        ${content.action.title}
+                    </h4>
+                    <p>${content.action.content}</p>
+                    ${generatePayloadButtons(content.action.payloads)}
+                </div>
+            `;
+            
+            // Update step indicators
+            document.querySelectorAll('.step-dot').forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index + 1 === step) {
+                    dot.classList.add('active');
+                } else if (index + 1 < step) {
+                    dot.classList.add('completed');
+                }
+            });
+            
+            // Update navigation buttons
+            btnPrev.disabled = step === 1;
+            btnNext.disabled = step === state.totalSteps;
+            
+            // Show patch toggle on step 6
+            if (step === 6) {
+                patchToggleContainer.classList.add('active');
+            } else {
+                patchToggleContainer.classList.remove('active');
+            }
+            
+            state.currentStep = step;
+            updateProgress();
+        }
+
+        // Generate Payload Buttons
+        function generatePayloadButtons(payloads) {
+            if (!payloads || payloads.length === 0) {
+                payloadButtons.innerHTML = '';
+                return '';
+            }
+            
+            let html = '<div class="payload-buttons">';
+            payloads.forEach((payload, index) => {
+                html += `
+                    <button class="payload-btn ${payload.type}" onclick="usePayload('${escapeHtml(payload.value)}')">
+                        ${escapeHtml(payload.label)}
+                    </button>
+                `;
+            });
+            html += '</div>';
+            
+            payloadButtons.innerHTML = html;
+            return html;
+        }
+
+        // Use Payload
+        window.usePayload = function(value) {
+            searchInput.value = value;
+            searchInput.classList.add('malicious');
+            searchInput.focus();
+        };
+
+        // Execute Search
+        function executeSearch() {
+            if (state.isExecuting) return;
+            
+            const userInput = searchInput.value;
+            state.isExecuting = true;
+            searchBtn.disabled = true;
+            
+            // Clear previous output
+            terminalOutput.innerHTML = '';
+            
+            // Update query display
+            updateQueryDisplay(userInput);
+            
+            // Check if patched
+            if (state.isPatched) {
+                executePatchedSearch(userInput);
+            } else {
+                executeVulnerableSearch(userInput);
+            }
+        }
+
+        // Update Query Display
+        function updateQueryDisplay(userInput) {
+            const isMalicious = userInput.includes("'") || userInput.includes("UNION") || userInput.includes("WAITFOR") || userInput.includes("SLEEP");
+            
+            if (isMalicious && !state.isPatched) {
+                queryCode.innerHTML = `
+                    <span class="query-part-normal">SELECT * FROM products WHERE name LIKE '%</span>
+                    <span class="query-part-injected">${escapeHtml(userInput)}</span>
+                    <span class="query-part-normal">%'</span>
+                `;
+            } else {
+                queryCode.innerHTML = `
+                    <span class="query-part-normal">SELECT * FROM products WHERE name LIKE '%</span>
+                    <span class="query-part-string">${escapeHtml(userInput)}</span>
+                    <span class="query-part-normal">%'</span>
+                `;
+            }
+        }
+
+        // Execute Vulnerable Search
+        function executeVulnerableSearch(userInput) {
+            // Check for UNION injection
+            if (userInput.toUpperCase().includes('UNION SELECT')) {
+                setTimeout(() => {
+                    addTerminalLine('postgres@db:~$', 'Executing query...', 'info');
+                    setTimeout(() => {
+                        addTerminalLine('postgres@db:~$', '⚠️ UNION-based SQL Injection detected!', 'warning');
+                        addTerminalLine('postgres@db:~$', 'Query merged results from products + admin_users tables:', 'error');
+                        displayUnionResults();
+                        state.isExecuting = false;
+                        searchBtn.disabled = false;
+                    }, 800);
+                }, 300);
+            }
+            // Check for Time-Based injection
+            else if (userInput.toUpperCase().includes('WAITFOR') || userInput.toUpperCase().includes('SLEEP')) {
+                showLoadingSpinner(5000);
+            }
+            // Check for boolean-based injection
+            else if (userInput.includes("' OR '")) {
+                setTimeout(() => {
+                    addTerminalLine('postgres@db:~$', 'Executing query...', 'info');
+                    setTimeout(() => {
+                        addTerminalLine('postgres@db:~$', '✓ Boolean-based injection successful - condition always true', 'success');
+                        displayProducts(mockDatabase.products);
+                        state.isExecuting = false;
+                        searchBtn.disabled = false;
+                    }, 600);
+                }, 300);
+            }
+            // Normal search
+            else {
+                setTimeout(() => {
+                    addTerminalLine('postgres@db:~$', 'Executing query...', 'info');
+                    setTimeout(() => {
+                        const results = mockDatabase.products.filter(p => 
+                            p.name.toLowerCase().includes(userInput.toLowerCase())
+                        );
+                        if (results.length > 0) {
+                            addTerminalLine('postgres@db:~$', `✓ Query executed successfully. Found ${results.length} products:`, 'success');
+                            displayProducts(results);
+                        } else {
+                            addTerminalLine('postgres@db:~$', '✓ Query executed. No matching products found.', 'info');
+                        }
+                        state.isExecuting = false;
+                        searchBtn.disabled = false;
+                    }, 500);
+                }, 300);
+            }
+        }
+
+        // Execute Patched Search
+        function executePatchedSearch(userInput) {
+            setTimeout(() => {
+                addTerminalLine('postgres@db:~$', 'Executing parameterized query...', 'info');
+                setTimeout(() => {
+                    addTerminalLine('postgres@db:~$', '✓ Input safely parameterized. Treating as literal string.', 'success');
+                    addTerminalLine('postgres@db:~$', '🔒 Prepared Statements active - SQL injection prevented', 'success');
+                    addTerminalLine('postgres@db:~$', `Searching for product: "${escapeHtml(userInput)}"`, 'info');
+                    addTerminalLine('postgres@db:~$', 'Result: 0 items found (no product matches this literal name)', 'warning');
+                    state.isExecuting = false;
+                    searchBtn.disabled = false;
+                }, 600);
+            }, 300);
+        }
+
+        // Show Loading Spinner (for Time-Based)
+        function showLoadingSpinner(duration) {
+            loadingContainer.classList.add('active');
+            terminalOutput.style.display = 'none';
+            
+            const startTime = Date.now();
+            const timerInterval = setInterval(() => {
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                loadingTimer.textContent = `${elapsed}s`;
+            }, 100);
+            
+            setTimeout(() => {
+                clearInterval(timerInterval);
+                loadingContainer.classList.remove('active');
+                terminalOutput.style.display = 'block';
+                addTerminalLine('postgres@db:~$', '⏱️ Time-based blind SQLi detected - server delayed 5 seconds', 'warning');
+                addTerminalLine('postgres@db:~$', '✓ Backend executed: WAITFOR DELAY \'0:0:05\'', 'error');
+                addTerminalLine('postgres@db:~$', '🔍 Inference: Condition was TRUE (delay occurred)', 'warning');
+                addTerminalLine('postgres@db:~$', '💡 Attacker can extract data character-by-character using timing', 'info');
+                state.isExecuting = false;
+                searchBtn.disabled = false;
+            }, duration);
+        }
+
+        // Display Products
+        function displayProducts(products) {
+            let html = '<table class="data-table">';
+            html += '<thead><tr><th>id</th><th>name</th><th>price</th><th>category</th></tr></thead>';
+            html += '<tbody>';
+            products.forEach(p => {
+                html += `<tr><td>${p.id}</td><td>${p.name}</td><td>$${p.price.toFixed(2)}</td><td>${p.category}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            addTerminalLine('postgres@db:~$', html, 'success', true);
+        }
+
+        // Display UNION Results
+        function displayUnionResults() {
+            let html = '<div style="margin: 15px 0;">';
+            html += '<div style="color: var(--accent-green); margin-bottom: 10px;">-- Products Table (Original Query)</div>';
+            html += '<table class="data-table">';
+            html += '<thead><tr><th>id</th><th>name</th><th>price</th><th>category</th></tr></thead>';
+            html += '<tbody>';
+            mockDatabase.products.slice(0, 2).forEach(p => {
+                html += `<tr><td>${p.id}</td><td>${p.name}</td><td>$${p.price.toFixed(2)}</td><td>${p.category}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            html += '<div style="color: var(--accent-red); margin: 15px 0 10px 0;">-- Admin Users Table (UNION Injection)</div>';
+            html += '<table class="data-table">';
+            html += '<thead><tr><th>id</th><th>username</th><th>password (MD5 hash)</th></tr></thead>';
+            html += '<tbody>';
+            mockDatabase.adminUsers.forEach(u => {
+                html += `<tr><td>${u.id}</td><td style="color: var(--accent-red);">${u.username}</td><td style="color: var(--accent-red);">${u.password}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            html += '<div style="color: var(--accent-amber); margin-top: 15px;">⚠️ CRITICAL: Admin credentials exfiltrated via UNION injection!</div>';
+            html += '</div>';
+            addTerminalLine('postgres@db:~$', html, 'error', true);
+        }
+
+        // Add Terminal Line
+        function addTerminalLine(prompt, output, type = 'info', isHtml = false) {
+            const line = document.createElement('div');
+            line.className = 'terminal-line fade-in';
+            line.innerHTML = `
+                <span class="terminal-prompt">${escapeHtml(prompt)}</span>
+                <span class="terminal-output ${type}">${isHtml ? output : escapeHtml(output)}</span>
+            `;
+            terminalOutput.appendChild(line);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        // Toggle Patch
+        function togglePatch() {
+            state.isPatched = patchToggle.checked;
+            
+            if (state.isPatched) {
+                patchStatus.innerHTML = '✅ Security Patch Active: Prepared Statements enabled';
+                patchStatus.classList.add('active');
+                searchInput.classList.remove('malicious');
+                addTerminalLine('postgres@db:~$', '🔒 SECURITY PATCH APPLIED: Parameterized queries now in use', 'success');
+                addTerminalLine('postgres@db:~$', '✓ All user input will be treated as data, not executable SQL', 'success');
+            } else {
+                patchStatus.innerHTML = '⚠️ Vulnerability Active: Direct string concatenation in use';
+                patchStatus.classList.remove('active');
+                addTerminalLine('postgres@db:~$', '⚠️ Security patch disabled - vulnerable to SQL injection', 'warning');
+            }
+        }
+
+        // Navigate Step
+        function navigateStep(direction) {
+            const newStep = state.currentStep + direction;
+            if (newStep >= 1 && newStep <= state.totalSteps) {
+                loadStep(newStep);
+            }
+        }
+
+        // Update Progress
+        function updateProgress() {
+            const progress = ((state.currentStep - 1) / (state.totalSteps - 1)) * 100;
+            progressFill.style.width = `${progress}%`;
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
