@@ -38,13 +38,13 @@ Typical use cases:
 |---|---|---|
 | _Example: Fake Login Portal_ | Recreates a generic login page to illustrate phishing page design patterns | ✅ |
 | _Example: Suspicious Email Preview_ | Demonstrates a mock inbox view highlighting phishing red flags | ✅ |
-| _Add your simulation here_ | — | 🔲 |
+| _Add your simulation here_ | - | 🔲 |
 
 *(Replace the rows above with the actual simulations you upload.)*
 
 ## 🏗️ Architecture
 
-The suite follows a **static, client-only architecture** — a deliberate design choice that removes any possibility of real data capture or transmission.
+The suite follows a **static, client-only architecture** - a deliberate design choice that removes any possibility of real data capture or transmission.
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -67,10 +67,10 @@ The suite follows a **static, client-only architecture** — a deliberate design
 ```
 
 **Design principles:**
-- **Zero data persistence** — no `localStorage`, cookies, or form submission endpoints capture input.
-- **Sandboxed by design** — every simulation is a self-contained page with no cross-origin requests.
-- **Framework-free** — dependency-free vanilla JS keeps the codebase auditable line-by-line.
-- **Fidelity for training value** — visual accuracy is prioritized so trainees learn to spot *real* red flags (spoofed domains, urgency cues, mismatched branding).
+- **Zero data persistence** - no `localStorage`, cookies, or form submission endpoints capture input.
+- **Sandboxed by design**  - simulation is a self-contained page with no cross-origin requests.
+- **Framework-free** - dependency-free vanilla JS keeps the codebase auditable line-by-line.
+- **Fidelity for training value** - visual accuracy is prioritized so trainees learn to spot *real* red flags (spoofed domains, urgency cues, mismatched branding).
 
 ## 🛠️ Tech Stack
 
@@ -81,17 +81,12 @@ The suite follows a **static, client-only architecture** — a deliberate design
 | Behavior | Vanilla JavaScript (ES6+) | Interactivity without external dependencies |
 | Tooling | Git / GitHub Pages (optional) | Version control & static hosting for demos |
 
-> No frameworks, no build pipeline, and no backend — reducing the attack surface of the simulation platform itself to effectively zero.
+> No frameworks, no build pipeline, and no backend - reducing the attack surface of the simulation platform itself to effectively zero.
 
 ## 📁 Project Structure
 
 ```
 cyber-attack-simulation/
-├── index.html              # Landing page linking to each simulation
-├── assets/
-│   ├── css/                # Stylesheets
-│   ├── js/                 # Scripts
-│   └── images/             # Screenshots, icons, illustrations
 ├── simulations/
 │   ├── simulation-1/
 │   │   └── index.html
@@ -103,11 +98,11 @@ cyber-attack-simulation/
 
 ## 🚀 Getting Started
 
-Clone the repository and open any simulation directly in your browser — no build step or server required.
+Clone the repository and open any simulation directly in your browser - no build step or server required.
 
 ```bash
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/Janiru-Sudasinghe/Cyber-Attack-Simulation-Suite.git
+cd Cyber-Attack-Simulation-Suite
 ```
 
 Then simply open the desired HTML file in your browser, e.g.:
