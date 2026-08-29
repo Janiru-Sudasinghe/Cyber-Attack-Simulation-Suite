@@ -12,7 +12,7 @@
 
 *A curated collection of static, browser-based simulations that recreate the visual and behavioral patterns of real-world cyber attacks - built to train, educate, and raise awareness, without any real-world risk.*
 
-[Overview](#-overview) • [Simulations](#-simulations-included) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Security Model](#-security-model) • [Roadmap](#-roadmap) • [Ethics](#️-ethical-use--disclaimer)
+[Overview](#-overview) • [Simulations](#-simulations-included) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Security Model](#-security-model) • [Ethics](#️-ethical-use--disclaimer)
 
 </div>
 
@@ -149,11 +149,11 @@ The author(s) of this repository assume no liability for misuse of this code.
 
 Because this repository simulates attacks, it is held to a *higher* security bar than a typical static site:
 
-- **No outbound network calls** — simulations must not `fetch()`, submit forms to, or load scripts from third-party or attacker-controlled domains.
-- **No credential capture** — any "login" or "input" field is cosmetic; submitted values are never stored, logged, or transmitted, and are cleared from memory after use.
-- **No real branding impersonation** — logos, names, and domains used in simulations are fictional or clearly marked as illustrative, avoiding trademark or brand-impersonation concerns.
-- **Isolated execution** — each simulation runs independently, so no simulation can affect another or the host page.
-- **Static analysis before merge** — contributions are reviewed for unintended network requests, tracking scripts, or obfuscated code prior to acceptance.
+- **No outbound network calls** - simulations must not `fetch()`, submit forms to, or load scripts from third-party or attacker-controlled domains.
+- **No credential capture** - any "login" or "input" field is cosmetic; submitted values are never stored, logged, or transmitted, and are cleared from memory after use.
+- **No real branding impersonation** - logos, names, and domains used in simulations are fictional or clearly marked as illustrative, avoiding trademark or brand-impersonation concerns.
+- **Isolated execution** - each simulation runs independently, so no simulation can affect another or the host page.
+- **Static analysis before merge** - contributions are reviewed for unintended network requests, tracking scripts, or obfuscated code prior to acceptance.
 
 If you discover a way a simulation could be misused beyond its intended training context, please open a private security advisory rather than a public issue.
 
@@ -169,24 +169,6 @@ If you discover a way a simulation could be misused beyond its intended training
 
 *(Check off items as each simulation passes review.)*
 
-## 🗺️ Roadmap
-
-- [ ] Add a central dashboard (`index.html`) linking all simulations with difficulty/category tags
-- [ ] Add a "Spot the Red Flags" interactive quiz mode per simulation
-- [ ] Add dark mode support across all pages
-- [ ] Add automated HTML/CSS linting via GitHub Actions
-- [ ] Publish a live demo via GitHub Pages
-- [ ] Add multi-language support for training content
-
-## 🤝 Contributing
-
-Contributions are welcome! If you'd like to add a new simulation:
-
-1. Fork the repository
-2. Create a new folder under `simulations/`
-3. Follow the existing folder structure and naming conventions
-4. Submit a pull request with a short description of the simulation and its training purpose
-
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE) — feel free to use and adapt it for your own security awareness initiatives, subject to the ethical use terms above.
@@ -194,7 +176,7 @@ This project is licensed under the [MIT License](LICENSE) — feel free to use a
 ## 👤 Author
 
 **Your Name**
-[GitHub](https://github.com/<your-username>) • [LinkedIn](#) • [Portfolio](#)
+[GitHub](https://github.com/Janiru-Sudasinghe) • [LinkedIn](https://www.linkedin.com/in/janiru-sudasinghe-7182b7186/) 
 
 ---
 
