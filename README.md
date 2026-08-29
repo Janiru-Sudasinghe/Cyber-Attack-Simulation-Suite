@@ -10,7 +10,7 @@
 [![Purpose](https://img.shields.io/badge/purpose-education%20%26%20awareness-critical.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
-*A curated collection of static, browser-based simulations that recreate the visual and behavioral patterns of real-world cyber attacks — built to train, educate, and raise awareness, without any real-world risk.*
+*A curated collection of static, browser-based simulations that recreate the visual and behavioral patterns of real-world cyber attacks - built to train, educate, and raise awareness, without any real-world risk.*
 
 [Overview](#-overview) • [Simulations](#-simulations-included) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Security Model](#-security-model) • [Roadmap](#-roadmap) • [Ethics](#️-ethical-use--disclaimer)
 
