@@ -47,23 +47,23 @@ Typical use cases:
 The suite follows a **static, client-only architecture** — a deliberate design choice that removes any possibility of real data capture or transmission.
 
 ```
-┌─────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────┐
 │                     Browser (Client)                 │
-│                                                       │
+│                                                      │
 │   ┌───────────────┐    ┌───────────────┐             │
-│   │  index.html   │───▶│  Simulation   │             │
+│   │  index.html   │───▶│  Simulation   │            │
 │   │ (launch page) │    │    Pages      │             │
 │   └───────────────┘    └───────┬───────┘             │
-│                                 │                     │
-│                         ┌───────▼───────┐             │
-│                         │  Local JS     │             │
-│                         │  (UI logic,   │             │
-│                         │  no network   │             │
-│                         │  calls)       │             │
-│                         └───────────────┘             │
-│                                                       │
-│         ❌ No server   ❌ No database   ❌ No API      │
-└─────────────────────────────────────────────────────┘
+│                                 │                    │
+│                         ┌───────▼───────┐            │
+│                         │  Local JS     │            │
+│                         │  (UI logic,   │            │
+│                         │  no network   │            │
+│                         │  calls)       │            │
+│                         └───────────────┘            │
+│                                                      │
+│     ❌ No server   ❌ No database   ❌ No API      │
+└──────────────────────────────────────────────────────┘
 ```
 
 **Design principles:**
