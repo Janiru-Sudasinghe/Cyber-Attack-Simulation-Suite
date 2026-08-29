@@ -171,13 +171,13 @@ If you discover a way a simulation could be misused beyond its intended training
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE) — feel free to use and adapt it for your own security awareness initiatives, subject to the ethical use terms above.
+This project is licensed under the [MIT License](LICENSE) - feel free to use and adapt it for your own security awareness initiatives, subject to the ethical use terms above.
 
 ## 👤 Author
 
-**Your Name**
+**Janiru Sudasinghe**   
 [GitHub](https://github.com/Janiru-Sudasinghe) • [LinkedIn](https://www.linkedin.com/in/janiru-sudasinghe-7182b7186/) 
 
 ---
 
-*Built for the security community — help people recognize attacks before they happen.*
+*Built for the security community - help people recognize attacks before they happen.*
