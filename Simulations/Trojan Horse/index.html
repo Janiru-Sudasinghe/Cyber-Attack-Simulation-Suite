@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trojan Horse Attack Simulation | Enterprise Security Sandbox</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --obsidian: #0a0e14;
+            --slate-dark: #1a1f2e;
+            --slate-medium: #2d3548;
+            --slate-light: #3d4659;
+            --electric-blue: #00d4ff;
+            --neon-amber: #ffaa00;
+            --crimson: #ff3366;
+            --success-green: #00ff88;
+            --text-primary: #e8ecf1;
+            --text-secondary: #94a3b8;
+            --border-color: #4a5568;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--obsidian);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--slate-dark), var(--slate-medium));
+            border-bottom: 2px solid var(--electric-blue);
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--electric-blue);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .warning-banner {
+            background: linear-gradient(90deg, var(--crimson), #cc0033);
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-column {
+            position: sticky;
+            top: 20px;
+        }
+
+        .step-card {
+            background: var(--slate-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .step-card.active {
+            border-color: var(--electric-blue);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .step-card.completed {
+            border-color: var(--success-green);
+            opacity: 0.7;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .step-number {
+            background: var(--electric-blue);
+            color: var(--obsidian);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            color: var(--electric-blue);
+        }
+
+        .dual-lens {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .dual-lens {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .lens-card {
+            background: var(--slate-medium);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .lens-simple {
+            border-left-color: var(--success-green);
+        }
+
+        .lens-technical {
+            border-left-color: var(--neon-amber);
+        }
+
+        .lens-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lens-simple .lens-title {
+            color: var(--success-green);
+        }
+
+        .lens-technical .lens-title {
+            color: var(--neon-amber);
+        }
+
+        .term-badge {
+            display: inline-block;
+            background: var(--slate-light);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin: 2px 5px 2px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .sandbox-panel {
+            background: var(--slate-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .sandbox-header {
+            background: var(--slate-medium);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sandbox-title {
+            font-size: 1.3rem;
+            color: var(--electric-blue);
+        }
+
+        .sandbox-content {
+            padding: 20px;
+        }
+
+        .workstation-view {
+            background: var(--obsidian);
+            border: 1px solid var(--slate-light);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .file-system {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .file-icon {
+            background: var(--slate-medium);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .file-icon:hover {
+            border-color: var(--electric-blue);
+            transform: translateY(-2px);
+        }
+
+        .file-icon.malicious {
+            border-color: var(--crimson);
+            animation: maliciousPulse 1.5s infinite;
+        }
+
+        @keyframes maliciousPulse {
+            0%, 100% { box-shadow: 0 0 5px var(--crimson); }
+            50% { box-shadow: 0 0 15px var(--crimson); }
+        }
+
+        .file-icon svg {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 8px;
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            word-break: break-word;
+        }
+
+        .process-list {
+            background: var(--obsidian);
+            border: 1px solid var(--slate-light);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .process-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--slate-medium);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .process-item.legitimate {
+            border-left: 3px solid var(--electric-blue);
+        }
+
+        .process-item.injected {
+            border-left: 3px solid var(--crimson);
+            background: linear-gradient(90deg, var(--slate-medium), rgba(255, 51, 102, 0.2));
+            animation: injectedFlash 2s infinite;
+        }
+
+        @keyframes injectedFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .process-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-running {
+            background: var(--success-green);
+            animation: blink 1s infinite;
+        }
+
+        .status-suspicious {
+            background: var(--neon-amber);
+        }
+
+        .status-malicious {
+            background: var(--crimson);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .c2-panel {
+            background: var(--obsidian);
+            border: 2px solid var(--crimson);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .c2-panel.active {
+            display: block;
+            animation: c2Activate 0.5s ease;
+        }
+
+        @keyframes c2Activate {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .c2-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--crimson);
+        }
+
+        .c2-status {
+            background: var(--crimson);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .beacon-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .beacon-light {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--success-green);
+            animation: beaconPulse 1s infinite;
+        }
+
+        @keyframes beaconPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        .c2-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .c2-button {
+            background: var(--slate-medium);
+            border: 1px solid var(--crimson);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .c2-button:hover {
+            background: var(--crimson);
+            transform: translateY(-2px);
+        }
+
+        .c2-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .action-button {
+            background: linear-gradient(135deg, var(--electric-blue), #0099cc);
+            border: none;
+            color: var(--obsidian);
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .action-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .registry-view {
+            background: var(--obsidian);
+            border: 1px solid var(--slate-light);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+        }
+
+        .registry-key {
+            color: var(--electric-blue);
+        }
+
+        .registry-value {
+            color: var(--success-green);
+        }
+
+        .registry-malicious {
+            color: var(--crimson);
+            animation: highlightNew 2s ease;
+        }
+
+        @keyframes highlightNew {
+            from { background: rgba(255, 51, 102, 0.3); }
+            to { background: transparent; }
+        }
+
+        .exfiltration-log {
+            background: var(--obsidian);
+            border: 1px solid var(--crimson);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: var(--slate-medium);
+            border-radius: 4px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--slate-light);
+            z-index: 1;
+        }
+
+        .progress-fill {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            height: 3px;
+            background: var(--electric-blue);
+            z-index: 2;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .progress-step {
+            background: var(--slate-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 3;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            border-color: var(--electric-blue);
+            background: var(--electric-blue);
+            color: var(--obsidian);
+        }
+
+        .progress-step.completed {
+            border-color: var(--success-green);
+            background: var(--success-green);
+            color: var(--obsidian);
+        }
+
+        .architecture-diagram {
+            background: var(--slate-medium);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .diagram-title {
+            color: var(--neon-amber);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .diagram-svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        footer {
+            margin-top: 50px;
+            padding: 30px;
+            background: var(--slate-dark);
+            border-radius: 12px;
+            text-align: center;
+            border-top: 2px solid var(--electric-blue);
+        }
+
+        .footer-text {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .mitigation-tips {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .tip-card {
+            background: var(--slate-medium);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--success-green);
+        }
+
+        .tip-title {
+            color: var(--success-green);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--slate-dark);
+            border: 2px solid var(--electric-blue);
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            color: var(--electric-blue);
+            margin-bottom: 20px;
+        }
+
+        .modal-text {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+
+        .modal-button {
+            background: var(--electric-blue);
+            color: var(--obsidian);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ Trojan Horse Attack Simulation</h1>
+            <p>Enterprise Security Sandbox | Hands-On Malware Analysis Training</p>
+        </header>
+
+        <div class="warning-banner">
+            ⚠️ EDUCATIONAL PURPOSES ONLY | This simulation demonstrates real attack techniques for defensive training
+        </div>
+
+        <div class="progress-indicator">
+            <div class="progress-line"></div>
+            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-step active" id="step1">1</div>
+            <div class="progress-step" id="step2">2</div>
+            <div class="progress-step" id="step3">3</div>
+            <div class="progress-step" id="step4">4</div>
+            <div class="progress-step" id="step5">5</div>
+            <div class="progress-step" id="step6">6</div>
+        </div>
+
+        <div class="main-layout">
+            <div class="left-column">
+                <!-- Step 1 -->
+                <div class="step-card active" id="stepCard1">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <h2 class="step-title">The Lure & Delivery</h2>
+                    </div>
+
+                    <div class="dual-lens">
+                        <div class="lens-card lens-simple">
+                            <h3 class="lens-title">📖 The Simple Story</h3>
+                            <p>Imagine receiving an email that looks perfectly legitimate—it appears to be from your company's finance department with an "urgent invoice" attached. The email has the right logo, the sender name looks correct, and the message creates a sense of urgency. You've seen hundreds of emails like this before, so you don't think twice about clicking the attachment.</p>
+                            <br>
+                            <p>The attacker has crafted something that looks like a gift—a free video game, an important document, or a time-sensitive request—that you naturally want to open.</p>
+                        </div>
+
+                        <div class="lens-card lens-technical">
+                            <h3 class="lens-title">⚙️ The Industry Mechanics</h3>
+                            <p>This is <span class="term-badge">Social Engineering</span> combined with <span class="term-badge">Weaponization</span>. The attacker creates a <span class="term-badge">Dropper</span>—a malicious executable disguised as a legitimate file.</p>
+                            <br>
+                            <p><strong>Technical Details:</strong></p>
+                            <ul>
+                                <li>File extension masquerading: <code>Invoice.pdf.exe</code> (Windows hides known extensions by default)</li>
+                                <li>Icon spoofing: Using PDF icons on executable files</li>
+                                <li>Email header manipulation to appear from trusted domains</li>
+                                <li>Embedding malicious macros in Office documents</li>
+                                <li>Using <span class="term-badge">Stager</span> code to download additional payloads</li>
+                            </ul>
+                            <br>
+                            <p>The dropper's job is simple: execute on the victim's machine and deploy the actual <span class="term-badge">Remote Access Trojan (RAT)</span> payload.</p>
+                        </div>
+                    </div>
+
+                    <button class="action-button" onclick="executeStep1()">📧 Send Spear-Phishing Email</button>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card" id="stepCard2">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <h2 class="step-title">Execution & Decoy Launch</h2>
+                    </div>
+
+                    <div class="dual-lens">
+                        <div class="lens-card lens-simple">
+                            <h3 class="lens-title">📖 The Simple Story</h3>
+                            <p>You click on the attachment, and just as expected, a PDF invoice opens up. Everything looks normal—you see the invoice details, company logo, and payment information. You're satisfied this was legitimate.</p>
+                            <br>
+                            <p>But here's what you didn't see: while the PDF was opening, a thief silently slipped out of the box and quietly hid in your closet. You got exactly what you expected (the invoice), but something else came along for the ride.</p>
+                        </div>
+
+                        <div class="lens-card lens-technical">
+                            <h3 class="lens-title">⚙️ The Industry Mechanics</h3>
+                            <p>This is the <span class="term-badge">Execution Phase</span>. The dropper performs two simultaneous actions:</p>
+                            <br>
+                            <p><strong>Technical Process:</strong></p>
+                            <ol>
+                                <li><strong>Decoy Launch:</strong> Opens the legitimate PDF to maintain user trust and avoid suspicion</li>
+                                <li><strong>Payload Extraction:</strong> Unpacks the embedded RAT from its encrypted container</li>
+                                <li><strong>Memory Loading:</strong> Loads malicious code into memory without writing to disk</li>
+                                <li><strong>Process Creation:</strong> Spawns the RAT in a hidden or suspended state</li>
+                            </ol>
+                            <br>
+                            <p>The decoy document is critical—it prevents the user from realizing anything malicious occurred and buys time for the malware to establish itself.</p>
+                        </div>
+                    </div>
+
+                    <button class="action-button" onclick="executeStep2()">🖱️ Click the Malicious Attachment</button>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card" id="stepCard3">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <h2 class="step-title">Persistence (Digging In)</h2>
+                    </div>
+
+                    <div class="dual-lens">
+                        <div class="lens-card lens-simple">
+                            <h3 class="lens-title">📖 The Simple Story</h3>
+                            <p>Now that the thief is inside your house, they don't want to lose their position. So they make copies of your house keys and rewire your electrical system. Now, every time you turn on the lights in the morning, the thief gets woken up automatically.</p>
+                            <br>
+                            <p>Even if you reboot your computer (turn off the lights and turn them back on), the malware will start right back up—because it's configured to launch automatically every time the system starts.</p>
+                        </div>
+
+                        <div class="lens-card lens-technical">
+                            <h3 class="lens-title">⚙️ The Industry Mechanics</h3>
+                            <p>This is <span class="term-badge">Persistence</span>—ensuring the malware survives system reboots and maintains long-term access.</p>
+                            <br>
+                            <p><strong>Common Persistence Mechanisms:</strong></p>
+                            <ul>
+                                <li><strong>Registry Run Keys:</strong> <code>HKCU\Software\Microsoft\Windows\CurrentVersion\Run</code></li>
+                                <li><strong>Registry RunOnce Keys:</strong> Execute once on next boot</li>
+                                <li><strong>Scheduled Tasks:</strong> Create tasks that run at logon or system startup</li>
+                                <li><strong>Startup Folder:</strong> Place shortcuts in user's startup directory</li>
+                                <li><strong>Service Creation:</strong> Register as a Windows service</li>
+                                <li><strong>WMI Event Subscriptions:</strong> Execute on system events</li>
+                            </ul>
+                            <br>
+                            <p>Advanced malware uses multiple persistence methods simultaneously for redundancy.</p>
+                        </div>
+                    </div>
+
+                    <div class="registry-view" id="registryView">
+                        <div style="color: var(--text-secondary); margin-bottom: 10px;">📋 Windows Registry - Current User Run Keys</div>
+                        <div id="registryContent">
+                            <div><span class="registry-key">HKCU\Software\Microsoft\Windows\CurrentVersion\Run</span></div>
+                            <div style="margin-top: 10px; padding-left: 20px;">
+                                <div>• OneDrive.exe → "C:\Users\Public\OneDrive.exe"</div>
+                                <div>• Spotify → "C:\Program Files\Spotify\Spotify.exe"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="action-button" onclick="executeStep3()">🔐 Establish Persistence</button>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step-card" id="stepCard4">
+                    <div class="step-header">
+                        <div class="step-number">4</div>
+                        <h2 class="step-title">Defense Evasion & Process Injection</h2>
+                    </div>
+
+                    <div class="dual-lens">
+                        <div class="lens-card lens-simple">
+                            <h3 class="lens-title">📖 The Simple Story</h3>
+                            <p>The thief knows your house has security cameras, so they put on a security guard's uniform. Now when the cameras scan the house, they see what looks like a legitimate security guard going about normal duties.</p>
+                            <br>
+                            <p>The malware does the same thing—it hides inside processes that your antivirus already trusts, so security software sees only "normal" system activity.</p>
+                        </div>
+
+                        <div class="lens-card lens-technical">
+                            <h3 class="lens-title">⚙️ The Industry Mechanics</h3>
+                            <p>This is <span class="term-badge">Defense Evasion</span> through <span class="term-badge">Process Injection</span>, specifically <span class="term-badge">Process Hollowing</span>.</p>
+                            <br>
+                            <p><strong>Process Hollowing Technique:</strong></p>
+                            <ol>
+                                <li>Create a legitimate process (e.g., <code>svchost.exe</code>, <code>explorer.exe</code>) in <strong>suspended state</strong></li>
+                                <li>Unmap the legitimate code from the process's memory</li>
+                                <li>Write malicious code into the empty memory space</li>
+                                <li>Update the process's entry point to point to malicious code</li>
+                                <li>Resume the process—now running malware but appearing legitimate</li>
+                            </ol>
+                            <br>
+                            <p><strong>Other Evasion Techniques:</strong></p>
+                            <ul>
+                                <li><span class="term-badge">DLL Injection</span>: Load malicious DLL into trusted process</li>
+                                <li><span class="term-badge">API Hooking</span>: Intercept security software calls</li>
+                                <li><span class="term-badge">Timestomping</span>: Modify file timestamps to appear legitimate</li>
+                                <li><span class="term-badge">Obfuscation</span>: Encrypt or encode malicious code</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button class="action-button" onclick="executeStep4()">💉 Inject into Legitimate Process</button>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="step-card" id="stepCard5">
+                    <div class="step-header">
+                        <div class="step-number">5</div>
+                        <h2 class="step-title">Command & Control (The Beacon)</h2>
+                    </div>
+
+                    <div class="dual-lens">
+                        <div class="lens-card lens-simple">
+                            <h3 class="lens-title">📖 The Simple Story</h3>
+                            <p>Now the thief uses a hidden radio to call their boss and say "I'm in." The security guards at the gate only check people entering the building—they don't inspect people leaving. So the thief's radio call goes out disguised as normal building traffic.</p>
+                            <br>
+                            <p>The malware establishes a connection back to the attacker's server, asking for instructions on what to do next.</p>
+                        </div>
+
+                        <div class="lens-card lens-technical">
+                            <h3 class="lens-title">⚙️ The Industry Mechanics</h3>
+                            <p>This is <span class="term-badge">Command & Control (C2)</span> establishment through <span class="term-badge">Beaconing</span>.</p>
+                            <br>
+                            <p><strong>C2 Communication:</strong></p>
+                            <ul>
+                                <li><strong>Outbound Connections:</strong> Firewall rules typically allow outbound traffic, so malware initiates connections <em>from</em> the victim machine</li>
+                                <li><strong>Protocol Tunneling:</strong> C2 traffic disguised as HTTPS, DNS, or ICMP</li>
+                                <li><strong>Domain Generation Algorithms (DGA):</strong> Generate random domains to avoid blacklists</li>
+                                <li><strong>Fast Flux DNS:</strong> Rapidly change IP addresses for C2 domains</li>
+                                <li><strong>Sleep/Beacon Intervals:</strong> Periodic check-ins to avoid detection</li>
+                            </ul>
+                            <br>
+                            <p><strong>Common C2 Frameworks:</strong> Cobalt Strike, Metasploit, Empire, Covenant</p>
+                        </div>
+                    </div>
+
+                    <button class="action-button" onclick="executeStep5()">📡 Establish C2 Beacon</button>
+                </div>
+
+                <!-- Step 6 -->
+                <div class="step-card" id="stepCard6">
+                    <div class="step-header">
+                        <div class="step-number">6</div>
+                        <h2 class="step-title">Action on Objectives & Mitigation</h2>
+                    </div>
+
+                    <div class="dual-lens">
+                        <div class="lens-card lens-simple">
+                            <h3 class="lens-title">📖 The Simple Story</h3>
+                            <p>The boss now tells the thief what to steal: credit card numbers from your wallet, passwords from your computer, or sensitive documents from your filing cabinet. The thief gathers everything and sends it back through the hidden radio.</p>
+                            <br>
+                            <p>To catch this thief, you need smart security that watches <em>how</em> people behave, not just what uniform they're wearing. If someone is copying all your files at 3 AM, that's suspicious behavior regardless of their outfit.</p>
+                        </div>
+
+                        <div class="lens-card lens-technical">
+                            <h3 class="lens-title">⚙️ The Industry Mechanics</h3>
+                            <p>This is <span class="term-badge">Actions on Objectives</span>—the attacker's end goals.</p>
+                            <br>
+                            <p><strong>Common RAT Capabilities:</strong></p>
+                            <ul>
+                                <li><span class="term-badge">Keylogger</span>: Capture all keystrokes (passwords, messages)</li>
+                                <li><span class="term-badge">Screen Capture</span>: Take screenshots at intervals</li>
+                                <li><span class="term-badge">File Exfiltration</span>: Steal documents, databases, credentials</li>
+                                <li><span class="term-badge">Webcam Access</span>: Activate camera remotely</li>
+                                <li><span class="term-badge">Lateral Movement</span>: Spread to other machines on network</li>
+                                <li><span class="term-badge">Privilege Escalation</span>: Gain admin/root access</li>
+                            </ul>
+                            <br>
+                            <p><strong>Modern Defense: EDR (Endpoint Detection and Response)</strong></p>
+                            <p>Unlike traditional signature-based antivirus, <span class="term-badge">EDR</span> monitors behavioral patterns, detects anomalies, and can automatically respond to threats in real-time.</p>
+                        </div>
+                    </div>
+
+                    <button class="action-button" onclick="executeStep6()">🎯 Execute Attack Objectives</button>
+                </div>
+
+                <footer>
+                    <p class="footer-text">
+                        <strong>🛡️ Defensive Takeaways:</strong> This simulation demonstrates why modern security requires layered defenses—email filtering, user awareness training, EDR solutions, network monitoring, and regular security audits.
+                    </p>
+                    <div class="mitigation-tips">
+                        <div class="tip-card">
+                            <h4 class="tip-title">📧 Email Security</h4>
+                            <p>Implement SPF, DKIM, DMARC. Use advanced threat protection for attachments and URLs.</p>
+                        </div>
+                        <div class="tip-card">
+                            <h4 class="tip-title">👥 User Training</h4>
+                            <p>Regular phishing simulations and security awareness training to recognize social engineering.</p>
+                        </div>
+                        <div class="tip-card">
+                            <h4 class="tip-title">🔍 EDR Solutions</h4>
+                            <p>Deploy behavioral analysis tools that detect suspicious process activity and lateral movement.</p>
+                        </div>
+                        <div class="tip-card">
+                            <h4 class="tip-title">🌐 Network Segmentation</h4>
+                            <p>Limit lateral movement with proper network segmentation and zero-trust architecture.</p>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+
+            <div class="right-column">
+                <div class="sandbox-panel">
+                    <div class="sandbox-header">
+                        <h3 class="sandbox-title">🖥️ Enterprise Workstation Sandbox</h3>
+                        <span class="c2-status" id="c2Status">OFFLINE</span>
+                    </div>
+                    <div class="sandbox-content">
+                        <div class="workstation-view">
+                            <h4 style="color: var(--text-secondary); margin-bottom: 10px;">📁 File System</h4>
+                            <div class="file-system" id="fileSystem">
+                                <div class="file-icon" id="file1">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--electric-blue)" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                    <div class="file-name">report.docx</div>
+                                </div>
+                                <div class="file-icon" id="file2">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--electric-blue)" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                    <div class="file-name">budget.xlsx</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="process-list">
+                            <h4 style="color: var(--text-secondary); margin-bottom: 10px;">⚙️ Active Processes</h4>
+                            <div id="processList">
+                                <div class="process-item legitimate" id="proc1">
+                                    <div class="process-status status-running"></div>
+                                    <span>explorer.exe</span>
+                                    <span style="color: var(--text-secondary); margin-left: auto;">PID: 4532</span>
+                                </div>
+                                <div class="process-item legitimate" id="proc2">
+                                    <div class="process-status status-running"></div>
+                                    <span>svchost.exe</span>
+                                    <span style="color: var(--text-secondary); margin-left: auto;">PID: 2341</span>
+                                </div>
+                                <div class="process-item legitimate" id="proc3">
+                                    <div class="process-status status-running"></div>
+                                    <span>chrome.exe</span>
+                                    <span style="color: var(--text-secondary); margin-left: auto;">PID: 8765</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="c2-panel" id="c2Panel">
+                            <div class="c2-header">
+                                <h4 style="color: var(--crimson);">🎯 Attacker C2 Panel</h4>
+                                <span class="c2-status">ACTIVE</span>
+                            </div>
+                            <div class="beacon-indicator">
+                                <div class="beacon-light"></div>
+                                <span style="color: var(--success-green);">Beacon Active | Interval: 60s</span>
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                                <div>Target: DESKTOP-ENT01 (192.168.1.105)</div>
+                                <div>User: CORP\jsmith</div>
+                                <div>OS: Windows 10 Enterprise</div>
+                                <div>Uptime: 47 days</div>
+                            </div>
+                            <div class="c2-actions">
+                                <button class="c2-button" onclick="c2Action('screenshot')">📸 Capture Screenshot</button>
+                                <button class="c2-button" onclick="c2Action('credentials')">🔑 Steal Credentials</button>
+                                <button class="c2-button" onclick="c2Action('keylog')">⌨️ Enable Keylogger</button>
+                                <button class="c2-button" onclick="c2Action('exfil')">📤 Exfiltrate Files</button>
+                            </div>
+                            <div class="exfiltration-log" id="exfilLog">
+                                <div style="color: var(--text-secondary);">Waiting for commands...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="completionModal">
+        <div class="modal-content">
+            <h2 class="modal-title">🎉 Simulation Complete!</h2>
+            <p class="modal-text">
+                You've successfully walked through all 6 phases of a Trojan Horse attack. You now understand how attackers disguise malicious code, establish persistence, evade detection, and maintain remote control.
+            </p>
+            <p class="modal-text" style="color: var(--electric-blue);">
+                <strong>Key Takeaway:</strong> Modern defenses must go beyond signature-based detection. EDR, behavioral analysis, and user awareness are critical layers of defense.
+            </p>
+            <button class="modal-button" onclick="resetSimulation()">🔄 Restart Simulation</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const totalSteps = 6;
+
+        function updateProgress(step) {
+            const progressFill = document.getElementById('progressFill');
+            const percentage = (step / totalSteps) * 100;
+            progressFill.style.width = percentage + '%';
+
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepEl = document.getElementById('step' + i);
+                const cardEl = document.getElementById('stepCard' + i);
+
+                if (i < step) {
+                    stepEl.classList.remove('active');
+                    stepEl.classList.add('completed');
+                    cardEl.classList.add('completed');
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                    cardEl.classList.add('active');
+                } else {
+                    stepEl.classList.remove('active', 'completed');
+                    cardEl.classList.remove('active', 'completed');
+                }
+            }
+        }
+
+        function executeStep1() {
+            currentStep = 1;
+            updateProgress(currentStep);
+
+            const fileSystem = document.getElementById('fileSystem');
+            const maliciousFile = document.createElement('div');
+            maliciousFile.className = 'file-icon malicious';
+            maliciousFile.id = 'maliciousFile';
+            maliciousFile.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="#ff3366" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="8"></line>
+                </svg>
+                <div class="file-name">Invoice.pdf.exe</div>
+            `;
+            fileSystem.appendChild(maliciousFile);
+
+            const btn = event.target;
+            btn.textContent = '✓ Email Sent - Malicious Attachment Delivered';
+            btn.disabled = true;
+            btn.style.background = 'linear-gradient(135deg, #00ff88, #00cc6a)';
+        }
+
+        function executeStep2() {
+            currentStep = 2;
+            updateProgress(currentStep);
+
+            const maliciousFile = document.getElementById('maliciousFile');
+            if (maliciousFile) {
+                maliciousFile.style.transform = 'scale(0.9)';
+                maliciousFile.style.opacity = '0.5';
+            }
+
+            const fileSystem = document.getElementById('fileSystem');
+            const decoyFile = document.createElement('div');
+            decoyFile.className = 'file-icon';
+            decoyFile.id = 'decoyFile';
+            decoyFile.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <div class="file-name">Invoice.pdf</div>
+            `;
+            fileSystem.appendChild(decoyFile);
+
+            const hiddenFile = document.createElement('div');
+            hiddenFile.className = 'file-icon';
+            hiddenFile.id = 'hiddenFile';
+            hiddenFile.style.borderColor = '#ffaa00';
+            hiddenFile.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <div class="file-name">C:\Users\Public\svchost.exe</div>
+            `;
+            fileSystem.appendChild(hiddenFile);
+
+            const btn = event.target;
+            btn.textContent = '✓ Executed - Decoy Opened, Payload Deployed';
+            btn.disabled = true;
+            btn.style.background = 'linear-gradient(135deg, #00ff88, #00cc6a)';
+        }
+
+        function executeStep3() {
+            currentStep = 3;
+            updateProgress(currentStep);
+
+            const registryContent = document.getElementById('registryContent');
+            const maliciousEntry = document.createElement('div');
+            maliciousEntry.className = 'registry-malicious';
+            maliciousEntry.style.marginTop = '10px';
+            maliciousEntry.style.paddingLeft = '20px';
+            maliciousEntry.innerHTML = `
+                <div style="color: var(--crimson); font-weight: bold;">• WindowsUpdate → "C:\Users\Public\svchost.exe"</div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 5px;">[MALICIOUS PERSISTENCE ESTABLISHED]</div>
+            `;
+            registryContent.appendChild(maliciousEntry);
+
+            const btn = event.target;
+            btn.textContent = '✓ Persistence Established - Registry Modified';
+            btn.disabled = true;
+            btn.style.background = 'linear-gradient(135deg, #00ff88, #00cc6a)';
+        }
+
+        function executeStep4() {
+            currentStep = 4;
+            updateProgress(currentStep);
+
+            const proc1 = document.getElementById('proc1');
+            proc1.classList.remove('legitimate');
+            proc1.classList.add('injected');
+            proc1.innerHTML = `
+                <div class="process-status status-malicious"></div>
+                <span style="color: var(--crimson); font-weight: bold;">explorer.exe [INJECTED]</span>
+                <span style="color: var(--text-secondary); margin-left: auto;">PID: 4532</span>
+            `;
+
+            const btn = event.target;
+            btn.textContent = '✓ Process Hollowing Complete - explorer.exe Compromised';
+            btn.disabled = true;
+            btn.style.background = 'linear-gradient(135deg, #00ff88, #00cc6a)';
+        }
+
+        function executeStep5() {
+            currentStep = 5;
+            updateProgress(currentStep);
+
+            const c2Panel = document.getElementById('c2Panel');
+            c2Panel.classList.add('active');
+
+            const c2Status = document.getElementById('c2Status');
+            c2Status.textContent = 'ONLINE';
+            c2Status.style.background = '#ff3366';
+
+            const btn = event.target;
+            btn.textContent = '✓ C2 Beacon Active - Attacker Connected';
+            btn.disabled = true;
+            btn.style.background = 'linear-gradient(135deg, #00ff88, #00cc6a)';
+        }
+
+        function executeStep6() {
+            currentStep = 6;
+            updateProgress(currentStep);
+
+            const btn = event.target;
+            btn.textContent = '✓ Attack Objectives Executed - Data Exfiltrated';
+            btn.disabled = true;
+            btn.style.background = 'linear-gradient(135deg, #00ff88, #00cc6a)';
+
+            setTimeout(() => {
+                document.getElementById('completionModal').classList.add('active');
+            }, 1500);
+        }
+
+        function c2Action(action) {
+            const exfilLog = document.getElementById('exfilLog');
+            const timestamp = new Date().toLocaleTimeString();
+
+            let logEntry = '';
+            switch(action) {
+                case 'screenshot':
+                    logEntry = `[${timestamp}] SCREENSHOT: Desktop captured (1920x1080) | Size: 2.4MB | Sent to C2`;
+                    break;
+                case 'credentials':
+                    logEntry = `[${timestamp}] CREDENTIALS: Extracted 47 passwords from Chrome | 23 from Windows Credential Manager`;
+                    break;
+                case 'keylog':
+                    logEntry = `[${timestamp}] KEYLOGGER: Active | Capturing: admin@company.com | P@ssw0rd123!`;
+                    break;
+                case 'exfil':
+                    logEntry = `[${timestamp}] EXFIL: 156 files queued | Documents, Spreadsheets, PDFs | Total: 847MB`;
+                    break;
+            }
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.borderLeft = '3px solid #ff3366';
+            entry.textContent = logEntry;
+
+            if (exfilLog.children[0] && exfilLog.children[0].textContent === 'Waiting for commands...') {
+                exfilLog.innerHTML = '';
+            }
+
+            exfilLog.insertBefore(entry, exfilLog.firstChild);
+        }
+
+        function resetSimulation() {
+            location.reload();
+        }
+
+        updateProgress(1);
+    </script>
+</body>
+</html>
