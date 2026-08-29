@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Man-in-the-Middle (MitM) Attack Simulation & Sandbox</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f1419;
+            --bg-panel: #1a1f2e;
+            --bg-terminal: #0d1117;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-amber: #f0b13b;
+            --accent-crimson: #ff4444;
+            --accent-green: #3fb950;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+            --success-color: #238636;
+            --warning-bg: rgba(240, 177, 59, 0.15);
+            --danger-bg: rgba(255, 68, 68, 0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--bg-panel) 0%, var(--bg-dark) 100%);
+            border-bottom: 2px solid var(--accent-blue);
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-blue);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .panel-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border-color);
+            z-index: 0;
+        }
+
+        .step-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-dark);
+            border: 3px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            border-color: var(--accent-blue);
+            background: var(--accent-blue);
+            color: var(--bg-dark);
+            transform: scale(1.1);
+        }
+
+        .step-dot.completed {
+            border-color: var(--accent-green);
+            background: var(--accent-green);
+            color: var(--bg-dark);
+        }
+
+        .dual-lens {
+            margin-bottom: 25px;
+        }
+
+        .lens {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .lens-simple {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1) 0%, rgba(88, 166, 255, 0.05) 100%);
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .lens-technical {
+            background: linear-gradient(135deg, rgba(163, 113, 247, 0.1) 0%, rgba(163, 113, 247, 0.05) 100%);
+            border-left: 4px solid var(--accent-purple);
+        }
+
+        .lens-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lens-simple .lens-title {
+            color: var(--accent-blue);
+        }
+
+        .lens-technical .lens-title {
+            color: var(--accent-purple);
+        }
+
+        .lens-content {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .technical-term {
+            color: var(--accent-blue);
+            font-weight: 600;
+            background: rgba(88, 166, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .network-map {
+            background: var(--bg-terminal);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 350px;
+        }
+
+        .network-node {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: var(--bg-panel);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .node-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .node-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .node-ip {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .victim-node {
+            top: 120px;
+            left: 50px;
+            border-color: var(--accent-blue);
+        }
+
+        .attacker-node {
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-color: var(--accent-crimson);
+        }
+
+        .gateway-node {
+            top: 120px;
+            right: 50px;
+            border-color: var(--accent-green);
+        }
+
+        .traffic-path {
+            position: absolute;
+            height: 4px;
+            background: var(--border-color);
+            top: 170px;
+            z-index: 1;
+            transition: all 0.5s ease;
+        }
+
+        .traffic-path-left {
+            left: 150px;
+            width: calc(50% - 100px);
+        }
+
+        .traffic-path-right {
+            left: 50%;
+            width: calc(50% - 100px);
+        }
+
+        .traffic-packet {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            top: -8px;
+            animation: none;
+        }
+
+        .packet-normal {
+            background: var(--accent-blue);
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
+
+        .packet-redirected {
+            background: var(--accent-amber);
+            box-shadow: 0 0 10px var(--accent-amber);
+        }
+
+        .packet-exposed {
+            background: var(--accent-crimson);
+            box-shadow: 0 0 10px var(--accent-crimson);
+        }
+
+        @keyframes trafficFlow {
+            0% {
+                left: 0;
+                opacity: 1;
+            }
+            100% {
+                left: 100%;
+                opacity: 0;
+            }
+        }
+
+        .terminal-window {
+            background: var(--bg-terminal);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-size: 0.85rem;
+            height: 280px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; }
+
+        .terminal-title {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        .terminal-content {
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .terminal-line {
+            margin-bottom: 5px;
+        }
+
+        .terminal-prompt {
+            color: var(--accent-green);
+        }
+
+        .terminal-command {
+            color: var(--accent-blue);
+        }
+
+        .terminal-output {
+            color: var(--text-secondary);
+        }
+
+        .terminal-success {
+            color: var(--accent-green);
+        }
+
+        .terminal-warning {
+            color: var(--accent-amber);
+        }
+
+        .terminal-danger {
+            color: var(--accent-crimson);
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            background: #79c0ff;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: var(--bg-dark);
+        }
+
+        .btn-success:hover {
+            background: #56d364;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--accent-crimson);
+            color: var(--bg-dark);
+        }
+
+        .btn-danger:hover {
+            background: #ff6b6b;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: var(--accent-amber);
+            color: var(--bg-dark);
+        }
+
+        .btn-warning:hover {
+            background: #ffc947;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: var(--warning-bg);
+            border: 1px solid var(--accent-amber);
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: var(--bg-dark);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-green);
+        }
+
+        .toggle-knob {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-knob {
+            left: 32px;
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-secure {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .status-compromised {
+            background: rgba(255, 68, 68, 0.2);
+            color: var(--accent-crimson);
+            border: 1px solid var(--accent-crimson);
+        }
+
+        .status-warning {
+            background: rgba(240, 177, 59, 0.2);
+            color: var(--accent-amber);
+            border: 1px solid var(--accent-amber);
+        }
+
+        .packet-info {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+
+        .packet-header {
+            color: var(--accent-blue);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .packet-data {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .credential-capture {
+            background: var(--danger-bg);
+            border: 1px solid var(--accent-crimson);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .credential-title {
+            color: var(--accent-crimson);
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .credential-data {
+            font-family: 'Courier New', monospace;
+            color: var(--text-primary);
+        }
+
+        .defense-active {
+            background: linear-gradient(135deg, rgba(63, 185, 80, 0.15) 0%, rgba(63, 185, 80, 0.05) 100%);
+            border: 2px solid var(--accent-green);
+        }
+
+        .attack-blocked {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-panel);
+            border: 2px solid var(--accent-green);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            z-index: 10;
+            display: none;
+        }
+
+        .attack-blocked.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .info-box {
+            background: var(--bg-dark);
+            border-left: 4px solid var(--accent-blue);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+
+        .info-box.warning {
+            border-left-color: var(--accent-amber);
+            background: var(--warning-bg);
+        }
+
+        .info-box.danger {
+            border-left-color: var(--accent-crimson);
+            background: var(--danger-bg);
+        }
+
+        .browser-mock {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .browser-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .browser-url {
+            flex: 1;
+            background: var(--bg-dark);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .browser-url.secure {
+            color: var(--accent-green);
+        }
+
+        .browser-url.insecure {
+            color: var(--accent-crimson);
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-input {
+            padding: 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-dark);
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .layer-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .layer-2 {
+            background: rgba(88, 166, 255, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .layer-3 {
+            background: rgba(163, 113, 247, 0.2);
+            color: var(--accent-purple);
+        }
+
+        .layer-7 {
+            background: rgba(240, 177, 59, 0.2);
+            color: var(--accent-amber);
+        }
+
+        .animation-container {
+            position: relative;
+            height: 350px;
+            overflow: hidden;
+        }
+
+        .ssl-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .ssl-secure {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .ssl-compromised {
+            background: rgba(255, 68, 68, 0.2);
+            color: var(--accent-crimson);
+            border: 1px solid var(--accent-crimson);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🔐 Advanced Man-in-the-Middle Attack Simulation</h1>
+            <p class="subtitle">Interactive sandbox demonstrating ARP Poisoning, SSL Stripping, and Packet Sniffing with enterprise-grade technical depth</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="panel" style="margin-bottom: 30px;">
+            <div class="step-indicator">
+                <div class="step-dot active" id="step1">1</div>
+                <div class="step-dot" id="step2">2</div>
+                <div class="step-dot" id="step3">3</div>
+                <div class="step-dot" id="step4">4</div>
+                <div class="step-dot" id="step5">5</div>
+                <div class="step-dot" id="step6">6</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Left Column: Explanations -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">📚</div>
+                    <h2 class="panel-title">Understanding the Attack</h2>
+                </div>
+
+                <!-- Step 1 -->
+                <div class="step-content active" id="content1">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 20px;">Step 1: The Secure Baseline (Normal Routing)</h3>
+
+                    <div class="dual-lens">
+                        <div class="lens lens-simple">
+                            <div class="lens-title">🎯 The Simple Story</div>
+                            <div class="lens-content">
+                                Imagine an armored truck driving directly from your house to the bank using a locked safe. The route is well-known and trusted—street signs point the right way, and no one interferes with the journey. Your sensitive documents travel securely inside the locked safe, protected from prying eyes.
+                            </div>
+                        </div>
+
+                        <div class="lens lens-technical">
+                            <div class="lens-title">⚙️ The Industry Mechanics <span class="layer-badge layer-2">Layer 2</span> <span class="layer-badge layer-3">Layer 3</span> <span class="layer-badge layer-7">Layer 7</span></div>
+                            <div class="lens-content">
+                                In normal network operations, your device uses <span class="technical-term">Address Resolution Protocol (ARP)</span> to map IP addresses to MAC addresses at <span class="technical-term">Layer 2 (Data Link Layer)</span>. When you visit <code>https://bank.com</code>, your browser initiates a <span class="technical-term">TLS handshake</span> at <span class="technical-term">Layer 7 (Application Layer)</span>, establishing an encrypted channel. Traffic flows directly from Victim → Gateway → Internet with proper <span class="technical-term">Layer 3 (Network Layer)</span> IP routing. The encryption ensures confidentiality and integrity via cryptographic protocols like AES-256 and SHA-256.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <strong>💡 Key Concept:</strong> ARP is a stateless protocol—it trusts any ARP reply without verification, which is the fundamental vulnerability exploited in MitM attacks.
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-content" id="content2">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 20px;">Step 2: The Interception (ARP Poisoning)</h3>
+
+                    <div class="dual-lens">
+                        <div class="lens lens-simple">
+                            <div class="lens-title">🎯 The Simple Story</div>
+                            <div class="lens-content">
+                                You secretly replace all the street signs in the neighborhood. You tell the house "I am the bank" and tell the bank "I am the house." Now the armored truck thinks it should drive through your warehouse before reaching its destination. Everyone believes your fake GPS updates because they never verify the source.
+                            </div>
+                        </div>
+
+                        <div class="lens lens-technical">
+                            <div class="lens-title">⚙️ The Industry Mechanics <span class="layer-badge layer-2">Layer 2</span></div>
+                            <div class="lens-content">
+                                The attacker broadcasts forged <span class="technical-term">ARP Reply</span> packets (unsolicited, known as "Gratuitous ARP"). These packets map the attacker's MAC address to the Gateway's IP address (192.168.1.1) on the victim's machine, and vice versa. This is <span class="technical-term">ARP Cache Poisoning</span> or <span class="technical-term">ARP Spoofing</span>. Since ARP is stateless and lacks authentication, the victim updates its ARP cache with the malicious entry. All traffic destined for the gateway now flows through the attacker's machine at <span class="technical-term">Layer 2</span>.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box warning">
+                        <strong>⚠️ Vulnerability:</strong> ARP has no authentication mechanism. Any device can claim any IP address belongs to its MAC address.
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-content" id="content3">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 20px;">Step 3: The Eavesdrop (Packet Sniffing)</h3>
+
+                    <div class="dual-lens">
+                        <div class="lens lens-simple">
+                            <div class="lens-title">🎯 The Simple Story</div>
+                            <div class="lens-content">
+                                Now the locked safes roll through your warehouse. You can't see inside them yet (they're still encrypted), but you know exactly who is talking to whom, when they communicate, and how much data they're exchanging. You're a silent observer with a perfect vantage point.
+                            </div>
+                        </div>
+
+                        <div class="lens lens-technical">
+                            <div class="lens-title">⚙️ The Industry Mechanics <span class="layer-badge layer-2">Layer 2</span> <span class="layer-badge layer-3">Layer 3</span></div>
+                            <div class="lens-content">
+                                The attacker enables <span class="technical-term">IP forwarding</span> (echo 1 > /proc/sys/net/ipv4/ip_forward on Linux) to prevent network disruption. Using packet capture tools like <span class="technical-term">Wireshark</span>, <span class="technical-term">tcpdump</span>, or <span class="technical-term">Bettercap</span>, the attacker sniffs all traffic passing through their network interface. At this stage, <span class="technical-term">HTTPS traffic remains encrypted</span>, but metadata (IPs, ports, packet sizes, timing) is visible. This is passive reconnaissance before active exploitation.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <strong>🔍 What's Visible:</strong> Source/destination IPs, TCP/UDP ports, packet sizes, timing patterns, DNS queries (if unencrypted), and unencrypted protocols (HTTP, FTP, Telnet).
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step-content" id="content4">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 20px;">Step 4: The Downgrade (SSL Stripping)</h3>
+
+                    <div class="dual-lens">
+                        <div class="lens lens-simple">
+                            <div class="lens-title">🎯 The Simple Story</div>
+                            <div class="lens-content">
+                                When the victim tries to send a locked safe, you intercept it. You tell the victim "Oh, we don't need the safe—just use a regular paper envelope." Meanwhile, you use a locked safe to talk to the real bank. The victim thinks they're being secure, but you've downgraded their protection to plaintext.
+                            </div>
+                        </div>
+
+                        <div class="lens lens-technical">
+                            <div class="lens-title">⚙️ The Industry Mechanics <span class="layer-badge layer-7">Layer 7</span></div>
+                            <div class="lens-content">
+                                <span class="technical-term">SSL Stripping</span> (or <span class="technical-term">SSL Downgrade Attack</span>) exploits the initial HTTP→HTTPS redirect. When the victim requests <code>http://bank.com</code>, the server responds with a <span class="technical-term">301/302 redirect</span> to <code>https://bank.com</code>. The attacker intercepts this, strips the redirect, and serves the victim a plaintext HTTP version while maintaining HTTPS to the real server. This is a <span class="technical-term">transparent proxy attack</span>. Tools like <span class="technical-term">SSLstrip</span> or <span class="technical-term">Bettercap's https module</span> automate this.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box danger">
+                        <strong>🚨 Critical:</strong> Without <span class="technical-term">HSTS (HTTP Strict Transport Security)</span>, browsers accept the downgraded connection. HSTS forces HTTPS-only connections, killing this attack.
+                    </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="step-content" id="content5">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 20px;">Step 5: The Capture (Credential Harvesting)</h3>
+
+                    <div class="dual-lens">
+                        <div class="lens lens-simple">
+                            <div class="lens-title">🎯 The Simple Story</div>
+                            <div class="lens-content">
+                                The victim writes their secret code (username and password) on the unsealed paper envelope and sends it. As it passes through your hands, you read it, copy the secret code, and then forward it along to the bank. The victim never knows you've stolen their credentials.
+                            </div>
+                        </div>
+
+                        <div class="lens lens-technical">
+                            <div class="lens-title">⚙️ The Industry Mechanics <span class="layer-badge layer-7">Layer 7</span></div>
+                            <div class="lens-content">
+                                The victim submits credentials via an <span class="technical-term">HTTP POST</span> request over the downgraded plaintext connection. The attacker's packet sniffer captures the full HTTP request body, extracting <span class="technical-term">form parameters</span> (username, password), <span class="technical-term">session cookies</span>, and any other sensitive data. This is <span class="technical-term">credential harvesting</span> or <span class="technical-term">session hijacking</span>. Regex patterns or tools like <span class="technical-term">Bettercap's proxy module</span> can automatically extract and log credentials in real-time.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box danger">
+                        <strong>🎯 Impact:</strong> Full account compromise, session hijacking, lateral movement, and potential data exfiltration. All without triggering security alerts.
+                    </div>
+                </div>
+
+                <!-- Step 6 -->
+                <div class="step-content" id="content6">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 20px;">Step 6: Enterprise Defense (HSTS & DAI)</h3>
+
+                    <div class="dual-lens">
+                        <div class="lens lens-simple">
+                            <div class="lens-title">🎯 The Simple Story</div>
+                            <div class="lens-content">
+                                The bank issues strict rules: "Armored trucks must NEVER accept paper envelopes—only locked safes." Additionally, the city upgrades all street signs with anti-tamper technology that verifies authenticity. Now your fake GPS updates are rejected, and the armored truck refuses to downgrade its security.
+                            </div>
+                        </div>
+
+                        <div class="lens lens-technical">
+                            <div class="lens-title">⚙️ The Industry Mechanics <span class="layer-badge layer-2">Layer 2</span> <span class="layer-badge layer-7">Layer 7</span></div>
+                            <div class="lens-content">
+                                <strong>HSTS (HTTP Strict Transport Security)</strong>: A <span class="technical-term">Layer 7</span> defense where servers send the <code>Strict-Transport-Security</code> header, instructing browsers to only use HTTPS for a specified duration (max-age). This prevents SSL stripping by enforcing encrypted connections.<br><br>
+                                <strong>Dynamic ARP Inspection (DAI)</strong>: A <span class="technical-term">Layer 2</span> switch security feature that validates ARP packets against a trusted database (built via <span class="technical-term">DHCP Snooping</span>). Forged ARP replies are dropped, blocking ARP poisoning.<br><br>
+                                <strong>802.1X Authentication</strong>: Port-based network access control requiring devices to authenticate before joining the network, preventing unauthorized attackers from connecting.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box" style="border-left-color: var(--accent-green); background: rgba(63, 185, 80, 0.1);">
+                        <strong>✅ Defense in Depth:</strong> Combine HSTS, DAI, 802.1X, network segmentation, and encrypted DNS (DNS-over-HTTPS/TLS) for comprehensive protection against MitM attacks.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Sandbox -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">🖥️</div>
+                    <h2 class="panel-title">Attack Sandbox</h2>
+                </div>
+
+                <div class="network-map">
+                    <div class="ssl-indicator ssl-secure" id="sslIndicator">🔒 SSL/TLS: SECURE</div>
+
+                    <div class="network-node victim-node">
+                        <div class="node-icon">💻</div>
+                        <div class="node-label">Victim PC</div>
+                        <div class="node-ip">192.168.1.100</div>
+                    </div>
+
+                    <div class="network-node attacker-node">
+                        <div class="node-icon">👤</div>
+                        <div class="node-label">Attacker</div>
+                        <div class="node-ip">192.168.1.50</div>
+                    </div>
+
+                    <div class="network-node gateway-node">
+                        <div class="node-icon">🌐</div>
+                        <div class="node-label">Gateway</div>
+                        <div class="node-ip">192.168.1.1</div>
+                    </div>
+
+                    <div class="traffic-path traffic-path-left" id="pathLeft"></div>
+                    <div class="traffic-path traffic-path-right" id="pathRight"></div>
+
+                    <div class="attack-blocked" id="attackBlocked">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">🛡️</div>
+                        <h3 style="color: var(--accent-green); margin-bottom: 10px;">Attack Blocked!</h3>
+                        <p style="color: var(--text-secondary);">Dynamic ARP Inspection (DAI) has detected and dropped forged ARP packets. Network integrity maintained.</p>
+                    </div>
+                </div>
+
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <div class="terminal-dot red"></div>
+                        <div class="terminal-dot yellow"></div>
+                        <div class="terminal-dot green"></div>
+                        <span class="terminal-title">attacker@kali:~ — Bettercap v2.28</span>
+                    </div>
+                    <div class="terminal-content" id="terminalContent">
+                        <div class="terminal-line terminal-output">root@kali:~# ifconfig eth0</div>
+                        <div class="terminal-line terminal-output">eth0: flags=4163 mtu 1500</div>
+                        <div class="terminal-line terminal-output">inet 192.168.1.50 netmask 255.255.255.0</div>
+                        <div class="terminal-line terminal-output">root@kali:~#</div>
+                    </div>
+                </div>
+
+                <div class="control-panel" id="controls">
+                    <!-- Dynamic buttons will be inserted here -->
+                </div>
+
+                <div class="toggle-container" id="defenseToggle" style="display: none;">
+                    <div class="toggle-switch" id="daiToggle" onclick="toggleDAI()">
+                        <div class="toggle-knob"></div>
+                    </div>
+                    <span class="toggle-label">Enable Switch Defenses (DAI + HSTS)</span>
+                </div>
+
+                <div id="packetCapture" style="display: none;">
+                    <div class="packet-info">
+                        <div class="packet-header">📦 Captured HTTP POST Request</div>
+                        <div class="packet-data">
+                            POST /login HTTP/1.1<br>
+                            Host: bank.com<br>
+                            Content-Type: application/x-www-form-urlencoded<br>
+                            <br>
+                            username=admin&password=SuperSecret123!
+                        </div>
+                    </div>
+                    <div class="credential-capture">
+                        <div class="credential-title">🎯 Credentials Extracted</div>
+                        <div class="credential-data">
+                            Username: <strong style="color: var(--accent-blue);">admin</strong><br>
+                            Password: <strong style="color: var(--accent-crimson);">SuperSecret123!</strong><br>
+                            Session Cookie: <strong style="color: var(--accent-amber);">sess_abc123xyz789</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="browser-mock" id="browserMock" style="display: none;">
+                    <div class="browser-bar">
+                        <span style="font-size: 1.2rem;">🌐</span>
+                        <div class="browser-url secure" id="browserUrl">https://bank.com</div>
+                        <span id="lockIcon">🔒</span>
+                    </div>
+                    <div class="login-form">
+                        <input type="text" class="form-input" placeholder="Username" value="admin" id="usernameInput" readonly>
+                        <input type="password" class="form-input" placeholder="Password" value="SuperSecret123!" id="passwordInput" readonly>
+                        <button class="btn btn-primary" onclick="submitLogin()">Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>🔐 Educational Security Training Tool | For Authorized Testing Only</p>
+            <p style="margin-top: 10px; font-size: 0.85rem;">Always obtain written permission before conducting security assessments on networks you do not own.</p>
+        </div>
+    </footer>
+
+    <script>
+        let currentStep = 1;
+        let daiEnabled = false;
+        let trafficInterval = null;
+
+        const terminalContent = document.getElementById('terminalContent');
+        const controls = document.getElementById('controls');
+        const progressFill = document.getElementById('progressFill');
+        const sslIndicator = document.getElementById('sslIndicator');
+        const browserMock = document.getElementById('browserMock');
+        const browserUrl = document.getElementById('browserUrl');
+        const lockIcon = document.getElementById('lockIcon');
+        const packetCapture = document.getElementById('packetCapture');
+        const defenseToggle = document.getElementById('defenseToggle');
+        const attackBlocked = document.getElementById('attackBlocked');
+        const pathLeft = document.getElementById('pathLeft');
+        const pathRight = document.getElementById('pathRight');
+
+        function addTerminalLine(text, className = 'terminal-output') {
+            const line = document.createElement('div');
+            line.className = `terminal-line ${className}`;
+            line.innerHTML = text;
+            terminalContent.appendChild(line);
+            terminalContent.scrollTop = terminalContent.scrollHeight;
+        }
+
+        function updateStepIndicator() {
+            for (let i = 1; i <= 6; i++) {
+                const dot = document.getElementById(`step${i}`);
+                const content = document.getElementById(`content${i}`);
+
+                dot.classList.remove('active', 'completed');
+                content.classList.remove('active');
+
+                if (i < currentStep) {
+                    dot.classList.add('completed');
+                } else if (i === currentStep) {
+                    dot.classList.add('active');
+                    content.classList.add('active');
+                }
+            }
+
+            progressFill.style.width = `${((currentStep - 1) / 5) * 100}%`;
+        }
+
+        function startTraffic(animationType = 'normal') {
+            if (trafficInterval) clearInterval(trafficInterval);
+
+            pathLeft.innerHTML = '';
+            pathRight.innerHTML = '';
+
+            const packetClass = animationType === 'normal' ? 'packet-normal' : 
+                               animationType === 'redirected' ? 'packet-redirected' : 'packet-exposed';
+
+            trafficInterval = setInterval(() => {
+                const packet = document.createElement('div');
+                packet.className = `traffic-packet ${packetClass}`;
+                pathLeft.appendChild(packet);
+
+                let pos = 0;
+                const animate = setInterval(() => {
+                    pos += 2;
+                    packet.style.left = pos + '%';
+
+                    if (pos >= 100) {
+                        clearInterval(animate);
+                        packet.remove();
+
+                        if (animationType !== 'normal') {
+                            const packet2 = document.createElement('div');
+                            packet2.className = `traffic-packet ${packetClass}`;
+                            pathRight.appendChild(packet2);
+
+                            let pos2 = 0;
+                            const animate2 = setInterval(() => {
+                                pos2 += 2;
+                                packet2.style.left = pos2 + '%';
+                                if (pos2 >= 100) {
+                                    clearInterval(animate2);
+                                    packet2.remove();
+                                }
+                            }, 30);
+                        }
+                    }
+                }, 30);
+            }, 2000);
+        }
+
+        function stopTraffic() {
+            if (trafficInterval) {
+                clearInterval(trafficInterval);
+                trafficInterval = null;
+            }
+            pathLeft.innerHTML = '';
+            pathRight.innerHTML = '';
+        }
+
+        function renderControls() {
+            controls.innerHTML = '';
+
+            const stepButtons = {
+                1: [
+                    { text: '🚀 Simulate Normal Traffic', class: 'btn-primary', action: simulateBaseline },
+                    { text: 'Next: ARP Poisoning →', class: 'btn-success', action: () => nextStep() }
+                ],
+                2: [
+                    { text: '⚡ Execute ARP Poisoning', class: 'btn-danger', action: executeARPPoisoning },
+                    { text: 'Next: Packet Sniffing →', class: 'btn-success', action: () => nextStep(), disabled: false }
+                ],
+                3: [
+                    { text: '📡 Enable IP Forwarding', class: 'btn-primary', action: enableIPForwarding },
+                    { text: 'Next: SSL Stripping →', class: 'btn-success', action: () => nextStep() }
+                ],
+                4: [
+                    { text: '🔓 Launch SSL Stripper', class: 'btn-warning', action: launchSSLStripper },
+                    { text: 'Next: Capture Credentials →', class: 'btn-success', action: () => nextStep() }
+                ],
+                5: [
+                    { text: '🎯 Open Victim Browser', class: 'btn-primary', action: openBrowser },
+                    { text: 'Next: Enterprise Defense →', class: 'btn-success', action: () => nextStep() }
+                ],
+                6: [
+                    { text: '🔄 Reset Simulation', class: 'btn-primary', action: resetSimulation }
+                ]
+            };
+
+            stepButtons[currentStep].forEach(btn => {
+                const button = document.createElement('button');
+                button.className = `btn ${btn.class}`;
+                button.innerHTML = btn.text;
+                button.onclick = btn.action;
+                if (btn.disabled) button.disabled = true;
+                controls.appendChild(button);
+            });
+
+            if (currentStep === 6) {
+                defenseToggle.style.display = 'flex';
+            }
+        }
+
+        function simulateBaseline() {
+            addTerminalLine('root@kali:~# bettercap -iface eth0', 'terminal-command');
+            addTerminalLine('[*] Starting network scan...');
+            addTerminalLine('[*] Victims discovered: 192.168.1.100 (Victim-PC)');
+            addTerminalLine('[*] Gateway: 192.168.1.1');
+            addTerminalLine('[*] Traffic flowing normally: Victim → Gateway', 'terminal-success');
+
+            startTraffic('normal');
+
+            setTimeout(() => {
+                addTerminalLine('[*] HTTPS connection established to bank.com');
+                addTerminalLine('[*] TLS 1.3 handshake completed successfully', 'terminal-success');
+            }, 1500);
+        }
+
+        function executeARPPoisoning() {
+            if (daiEnabled) {
+                attackBlocked.classList.add('show');
+                addTerminalLine('root@kali:~# arpspoof -i eth0 -t 192.168.1.100 192.168.1.1', 'terminal-command');
+                addTerminalLine('[!] DAI: Forged ARP packet detected from 192.168.1.50', 'terminal-danger');
+                addTerminalLine('[!] DAI: Packet dropped. ARP cache poisoning blocked.', 'terminal-success');
+                return;
+            }
+
+            addTerminalLine('root@kali:~# arpspoof -i eth0 -t 192.168.1.100 192.168.1.1', 'terminal-command');
+            addTerminalLine('[*] Sending forged ARP reply to 192.168.1.100...');
+            addTerminalLine('[*] ARP Cache: 192.168.1.1 → aa:bb:cc:dd:ee:ff (ATTACKER MAC)', 'terminal-warning');
+
+            setTimeout(() => {
+                addTerminalLine('root@kali:~# arpspoof -i eth0 -t 192.168.1.1 192.168.1.100', 'terminal-command');
+                addTerminalLine('[*] Sending forged ARP reply to 192.168.1.1...');
+                addTerminalLine('[*] ARP Cache: 192.168.1.100 → aa:bb:cc:dd:ee:ff (ATTACKER MAC)', 'terminal-warning');
+                addTerminalLine('[✓] ARP poisoning successful! Traffic now rerouted: Victim → Attacker → Gateway', 'terminal-success');
+
+                startTraffic('redirected');
+            }, 1500);
+        }
+
+        function enableIPForwarding() {
+            addTerminalLine('root@kali:~# echo 1 > /proc/sys/net/ipv4/ip_forward', 'terminal-command');
+            addTerminalLine('[*] IP forwarding enabled', 'terminal-success');
+            addTerminalLine('root@kali:~# sysctl net.ipv4.ip_forward');
+            addTerminalLine('net.ipv4.ip_forward = 1');
+            addTerminalLine('[*] Packet sniffer activated (Wireshark/tcpdump)', 'terminal-success');
+            addTerminalLine('[*] Capturing all traffic on eth0...', 'terminal-warning');
+        }
+
+        function launchSSLStripper() {
+            addTerminalLine('root@kali:~# sslstrip -p 8080', 'terminal-command');
+            addTerminalLine('[*] SSLstrip listening on port 8080');
+            addTerminalLine('[*] Monitoring HTTP requests for HTTPS redirects...');
+
+            setTimeout(() => {
+                addTerminalLine('[*] Victim requested: http://bank.com', 'terminal-warning');
+                addTerminalLine('[*] Intercepted 301 redirect to https://bank.com');
+                addTerminalLine('[*] Stripping HTTPS redirect, serving HTTP version...', 'terminal-danger');
+                addTerminalLine('[✓] SSL downgrade successful! Victim→Attacker: HTTP, Attacker→Bank: HTTPS', 'terminal-warning');
+
+                sslIndicator.className = 'ssl-indicator ssl-compromised';
+                sslIndicator.innerHTML = '🔓 SSL/TLS: COMPROMISED';
+            }, 2000);
+        }
+
+        function openBrowser() {
+            browserMock.style.display = 'block';
+            packetCapture.style.display = 'none';
+
+            addTerminalLine('[*] Victim navigating to bank.com...');
+            addTerminalLine('[*] HTTP connection (downgraded from HTTPS)', 'terminal-warning');
+        }
+
+        function submitLogin() {
+            browserUrl.className = 'browser-url insecure';
+            browserUrl.innerHTML = 'http://bank.com';
+            lockIcon.innerHTML = '🔓';
+
+            addTerminalLine('[*] HTTP POST request detected: /login', 'terminal-danger');
+            addTerminalLine('[*] Capturing form data...');
+
+            setTimeout(() => {
+                packetCapture.style.display = 'block';
+                addTerminalLine('[✓] Credentials captured!', 'terminal-danger');
+                addTerminalLine('username=admin', 'terminal-danger');
+                addTerminalLine('password=SuperSecret123!', 'terminal-danger');
+                addTerminalLine('[*] Session cookie: sess_abc123xyz789', 'terminal-warning');
+                addTerminalLine('[✓] Account compromised. Lateral movement possible.', 'terminal-danger');
+
+                startTraffic('exposed');
+            }, 1500);
+        }
+
+        function toggleDAI() {
+            daiEnabled = !daiEnabled;
+            const toggle = document.getElementById('daiToggle');
+
+            if (daiEnabled) {
+                toggle.classList.add('active');
+                addTerminalLine('[*] DAI enabled on switch', 'terminal-success');
+                addTerminalLine('[*] HSTS preloaded for bank.com', 'terminal-success');
+                addTerminalLine('[*] Network defenses active', 'terminal-success');
+
+                document.querySelector('.network-map').classList.add('defense-active');
+
+                if (currentStep >= 2 && currentStep <= 5) {
+                    attackBlocked.classList.add('show');
+                    stopTraffic();
+                    addTerminalLine('[!] DAI: Forged ARP packets dropped', 'terminal-success');
+                    addTerminalLine('[!] Attack mitigated. Network integrity maintained.', 'terminal-success');
+                }
+            } else {
+                toggle.classList.remove('active');
+                document.querySelector('.network-map').classList.remove('defense-active');
+                attackBlocked.classList.remove('show');
+                addTerminalLine('[*] DAI disabled', 'terminal-warning');
+                addTerminalLine('[!] Network vulnerable to Layer 2 attacks', 'terminal-warning');
+            }
+        }
+
+        function nextStep() {
+            currentStep++;
+            if (currentStep > 6) currentStep = 6;
+            updateStepIndicator();
+            renderControls();
+        }
+
+        function resetSimulation() {
+            currentStep = 1;
+            daiEnabled = false;
+
+            stopTraffic();
+            terminalContent.innerHTML = `
+                <div class="terminal-line terminal-output">root@kali:~# ifconfig eth0</div>
+                <div class="terminal-line terminal-output">eth0: flags=4163 mtu 1500</div>
+                <div class="terminal-line terminal-output">inet 192.168.1.50 netmask 255.255.255.0</div>
+                <div class="terminal-line terminal-output">root@kali:~#</div>
+            `;
+
+            sslIndicator.className = 'ssl-indicator ssl-secure';
+            sslIndicator.innerHTML = '🔒 SSL/TLS: SECURE';
+
+            browserMock.style.display = 'none';
+            packetCapture.style.display = 'none';
+            defenseToggle.style.display = 'none';
+            attackBlocked.classList.remove('show');
+            document.querySelector('.network-map').classList.remove('defense-active');
+
+            browserUrl.className = 'browser-url secure';
+            browserUrl.innerHTML = 'https://bank.com';
+            lockIcon.innerHTML = '🔒';
+
+            updateStepIndicator();
+            renderControls();
+
+            addTerminalLine('[*] Simulation reset. Ready for new attack sequence.', 'terminal-success');
+        }
+
+        // Initialize
+        updateStepIndicator();
+        renderControls();
+    </script>
+</body>
+</html>
