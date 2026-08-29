@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced DoS/DDoS Attack Simulation & Sandbox</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #121822;
+            --bg-tertiary: #1a2230;
+            --text-primary: #e8f1f8;
+            --text-secondary: #94a3b8;
+            --accent-blue: #00d4ff;
+            --accent-purple: #a855f7;
+            --accent-red: #ff4757;
+            --accent-green: #22c55e;
+            --accent-gold: #fbbf24;
+            --border-color: #2d3748;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .explanation-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .sandbox-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .step-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            border-color: var(--accent-blue);
+            transform: scale(1.1);
+        }
+
+        .step-dot.completed {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            border-color: var(--accent-green);
+        }
+
+        .dual-lens {
+            margin-bottom: 30px;
+        }
+
+        .lens-title {
+            font-size: 1.4rem;
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lens-title svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .lens-content {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-blue);
+            margin-bottom: 20px;
+        }
+
+        .lens-content.story {
+            border-left-color: var(--accent-gold);
+        }
+
+        .lens-content.technical {
+            border-left-color: var(--accent-purple);
+        }
+
+        .lens-content h3 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .lens-content p {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+
+        .term-highlight {
+            color: var(--accent-blue);
+            font-weight: 600;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .network-topology {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .topology-svg {
+            width: 100%;
+            height: 280px;
+        }
+
+        .gauges-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .gauges-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .gauge {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .gauge-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .gauge-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+
+        .gauge-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+            border-radius: 4px;
+            transition: width 0.5s ease, background 0.3s ease;
+        }
+
+        .gauge-fill.warning {
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-red));
+        }
+
+        .gauge-fill.critical {
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-purple));
+        }
+
+        .c2-terminal {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 20px;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-title {
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .terminal-status {
+            color: var(--accent-green);
+            font-size: 0.9rem;
+        }
+
+        .terminal-output {
+            height: 150px;
+            overflow-y: auto;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .terminal-line {
+            margin-bottom: 5px;
+        }
+
+        .terminal-line.success {
+            color: var(--accent-green);
+        }
+
+        .terminal-line.error {
+            color: var(--accent-red);
+        }
+
+        .terminal-line.command {
+            color: var(--accent-blue);
+        }
+
+        .terminal-line.system {
+            color: var(--accent-gold);
+        }
+
+        .terminal-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .terminal-prompt {
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .terminal-input input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .terminal-input input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: #00b8e6;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff3344;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+
+        .btn-success:hover {
+            background: #1eb356;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--bg-tertiary);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .toggle-label {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            transition: 0.3s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--text-secondary);
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+            background-color: white;
+        }
+
+        .packet {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .packet-legitimate {
+            background: var(--accent-blue);
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
+
+        .packet-attack {
+            background: var(--accent-red);
+            box-shadow: 0 0 10px var(--accent-red);
+        }
+
+        .packet-amplified {
+            background: var(--accent-purple);
+            box-shadow: 0 0 15px var(--accent-purple);
+            width: 16px;
+            height: 16px;
+        }
+
+        .packet-scrubbed {
+            background: var(--accent-gold);
+            box-shadow: 0 0 10px var(--accent-gold);
+        }
+
+        .mitigation-shield {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border: 3px solid var(--accent-green);
+            border-radius: 50%;
+            background: rgba(34, 197, 94, 0.1);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .mitigation-shield.active {
+            display: flex;
+            animation: pulse 2s infinite;
+        }
+
+        .mitigation-shield svg {
+            width: 60px;
+            height: 60px;
+            fill: var(--accent-green);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
+            }
+        }
+
+        .progress-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-blue);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .info-box {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-blue);
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+
+        .info-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+
+        .info-box ul {
+            color: var(--text-secondary);
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ Advanced DoS/DDoS Attack Simulation</h1>
+            <p>Enterprise Network & Server Monitor | Attacker C2 Terminal</p>
+        </header>
+
+        <div class="step-indicator">
+            <div class="step-dot active" data-step="1">1</div>
+            <div class="step-dot" data-step="2">2</div>
+            <div class="step-dot" data-step="3">3</div>
+            <div class="step-dot" data-step="4">4</div>
+            <div class="step-dot" data-step="5">5</div>
+            <div class="step-dot" data-step="6">6</div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Left Column: Explanations -->
+            <div class="explanation-panel" id="explanationPanel">
+                <div id="stepContent"></div>
+            </div>
+
+            <!-- Right Column: Sandbox -->
+            <div class="sandbox-panel">
+                <div class="network-topology">
+                    <svg class="topology-svg" viewBox="0 0 600 280">
+                        <!-- Botnets (Left) -->
+                        <g id="botnetGroup">
+                            <circle cx="60" cy="60" r="25" fill="#1a2230" stroke="#a855f7" stroke-width="2"/>
+                            <text x="60" y="65" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="bold">BOT-1</text>
+
+                            <circle cx="60" cy="140" r="25" fill="#1a2230" stroke="#a855f7" stroke-width="2"/>
+                            <text x="60" y="145" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="bold">BOT-2</text>
+
+                            <circle cx="60" cy="220" r="25" fill="#1a2230" stroke="#a855f7" stroke-width="2"/>
+                            <text x="60" y="225" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="bold">BOT-3</text>
+                        </g>
+
+                        <!-- DNS Resolvers (Top Middle) -->
+                        <g id="dnsGroup">
+                            <rect x="200" y="30" width="80" height="50" fill="#1a2230" stroke="#fbbf24" stroke-width="2" rx="5"/>
+                            <text x="240" y="55" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="bold">DNS</text>
+                            <text x="240" y="70" text-anchor="middle" fill="#fbbf24" font-size="9">Resolver</text>
+                        </g>
+
+                        <!-- C2 Server (Top Left) -->
+                        <g id="c2Group">
+                            <rect x="140" y="30" width="50" height="50" fill="#1a2230" stroke="#ff4757" stroke-width="2" rx="5"/>
+                            <text x="165" y="55" text-anchor="middle" fill="#ff4757" font-size="9" font-weight="bold">C2</text>
+                        </g>
+
+                        <!-- Target Server (Right) -->
+                        <g id="serverGroup">
+                            <rect x="450" y="90" width="100" height="100" fill="#1a2230" stroke="#00d4ff" stroke-width="3" rx="8"/>
+                            <text x="500" y="125" text-anchor="middle" fill="#00d4ff" font-size="11" font-weight="bold">TARGET</text>
+                            <text x="500" y="145" text-anchor="middle" fill="#00d4ff" font-size="10">SERVER</text>
+
+                            <!-- Server Status Indicators -->
+                            <circle cx="470" cy="170" r="5" fill="#22c55e" id="serverStatus1"/>
+                            <circle cx="485" cy="170" r="5" fill="#22c55e" id="serverStatus2"/>
+                            <circle cx="500" cy="170" r="5" fill="#22c55e" id="serverStatus3"/>
+                        </g>
+
+                        <!-- Connection Lines -->
+                        <line x1="85" y1="60" x2="200" y2="55" stroke="#2d3748" stroke-width="2" id="line1"/>
+                        <line x1="85" y1="140" x2="200" y2="55" stroke="#2d3748" stroke-width="2" id="line2"/>
+                        <line x1="85" y1="220" x2="200" y2="55" stroke="#2d3748" stroke-width="2" id="line3"/>
+                        <line x1="280" y1="55" x2="450" y2="140" stroke="#2d3748" stroke-width="2" id="line4"/>
+
+                        <!-- Mitigation Shield -->
+                        <g class="mitigation-shield" id="mitigationShield">
+                            <path d="M30 10 L50 10 L55 20 L50 50 L30 60 L10 50 L5 20 Z" fill="none" stroke="#22c55e" stroke-width="2"/>
+                            <path d="M25 30 L35 40 L50 20" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g>
+
+                        <!-- Packets Container -->
+                        <g id="packetsContainer"></g>
+                    </svg>
+                </div>
+
+                <div class="gauges-container">
+                    <div class="gauge">
+                        <div class="gauge-title">CPU Usage</div>
+                        <div class="gauge-value" id="cpuValue">20%</div>
+                        <div class="gauge-bar">
+                            <div class="gauge-fill" id="cpuBar" style="width: 20%"></div>
+                        </div>
+                    </div>
+                    <div class="gauge">
+                        <div class="gauge-title">Bandwidth</div>
+                        <div class="gauge-value" id="bandwidthValue">25%</div>
+                        <div class="gauge-bar">
+                            <div class="gauge-fill" id="bandwidthBar" style="width: 25%"></div>
+                        </div>
+                    </div>
+                    <div class="gauge">
+                        <div class="gauge-title">Connections</div>
+                        <div class="gauge-value" id="connValue">150</div>
+                        <div class="gauge-bar">
+                            <div class="gauge-fill" id="connBar" style="width: 30%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gauges-container">
+                    <div class="gauge">
+                        <div class="gauge-title">SYN Queue</div>
+                        <div class="gauge-value" id="synValue">10%</div>
+                        <div class="gauge-bar">
+                            <div class="gauge-fill" id="synBar" style="width: 10%"></div>
+                        </div>
+                    </div>
+                    <div class="gauge">
+                        <div class="gauge-title">Thread Pool</div>
+                        <div class="gauge-value" id="threadValue">25%</div>
+                        <div class="gauge-bar">
+                            <div class="gauge-fill" id="threadBar" style="width: 25%"></div>
+                        </div>
+                    </div>
+                    <div class="gauge">
+                        <div class="gauge-title">Packets/sec</div>
+                        <div class="gauge-value" id="ppsValue">1.2K</div>
+                        <div class="gauge-bar">
+                            <div class="gauge-fill" id="ppsBar" style="width: 20%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="c2-terminal">
+                    <div class="terminal-header">
+                        <span class="terminal-title">⚡ ATTACKER C2 TERMINAL</span>
+                        <span class="terminal-status" id="terminalStatus">● ONLINE</span>
+                    </div>
+                    <div class="terminal-output" id="terminalOutput">
+                        <div class="terminal-line system">[SYSTEM] C2 Server initialized...</div>
+                        <div class="terminal-line system">[SYSTEM] Botnet nodes: 15,847 active</div>
+                        <div class="terminal-line system">[SYSTEM] Ready for commands...</div>
+                    </div>
+                    <div class="terminal-input">
+                        <span class="terminal-prompt">root@c2:~#</span>
+                        <input type="text" id="terminalInput" placeholder="Enter command..." autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="control-panel" id="controlPanel">
+                    <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next Step →</button>
+                </div>
+
+                <div class="toggle-container hidden" id="mitigationToggle">
+                    <span class="toggle-label">🛡️ Enable Cloud Scrubbing</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mitigationToggle" onchange="toggleMitigation()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <h3 style="color: var(--text-primary); margin-bottom: 10px;">Simulation Progress</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: 16.67%"></div>
+            </div>
+            <p style="color: var(--text-secondary); margin-top: 10px; text-align: center;" id="progressText">Step 1 of 6: Baseline Infrastructure</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>⚠️ Educational Purpose Only | This simulation demonstrates DDoS attack vectors for defensive training</p>
+        <p style="margin-top: 10px;">Built for enterprise security awareness and infrastructure defense education</p>
+    </footer>
+
+    <script>
+        // State Management
+        let currentStep = 1;
+        let isMitigationActive = false;
+        let animationInterval = null;
+        let packetAnimationInterval = null;
+
+        // Gauge Update Function
+        function updateGauge(valueId, barId, value, isWarning = false, isCritical = false) {
+            document.getElementById(valueId).textContent = value;
+            const bar = document.getElementById(barId);
+            bar.style.width = value.replace('%', '') + '%';
+
+            if (isCritical) {
+                bar.className = 'gauge-fill critical';
+            } else if (isWarning) {
+                bar.className = 'gauge-fill warning';
+            } else {
+                bar.className = 'gauge-fill';
+            }
+        }
+
+        // Terminal Output
+        function addTerminalLine(text, type = 'normal') {
+            const output = document.getElementById('terminalOutput');
+            const line = document.createElement('div');
+            line.className = `terminal-line ${type}`;
+            line.textContent = text;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // Packet Animation
+        function createPacket(type, delay = 0) {
+            setTimeout(() => {
+                const packet = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                packet.setAttribute('r', type === 'amplified' ? '8' : '6');
+                packet.setAttribute('fill', type === 'legitimate' ? '#00d4ff' : type === 'amplified' ? '#a855f7' : type === 'scrubbed' ? '#fbbf24' : '#ff4757');
+                packet.setAttribute('class', `packet packet-${type}`);
+
+                const startY = 40 + Math.random() * 200;
+                packet.setAttribute('cy', startY);
+                packet.setAttribute('cx', '60');
+
+                document.getElementById('packetsContainer').appendChild(packet);
+
+                let progress = 0;
+                const speed = type === 'amplified' ? 3 : type === 'legitimate' ? 2 : 4;
+
+                const animate = () => {
+                    progress += speed;
+                    const currentX = 60 + progress * 4;
+                    packet.setAttribute('cx', currentX);
+
+                    // Scrubbing logic
+                    if (isMitigationActive && type === 'attack' && currentX > 280 && currentX < 320) {
+                        packet.setAttribute('fill', '#fbbf24');
+                        packet.setAttribute('class', 'packet packet-scrubbed');
+                    }
+
+                    if (currentX < 500 && progress < 120) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        if (currentX >= 500 && (!isMitigationActive || type === 'legitimate' || type === 'scrubbed')) {
+                            // Packet reached server
+                        }
+                        packet.remove();
+                    }
+                };
+
+                requestAnimationFrame(animate);
+            }, delay);
+        }
+
+        // Start Traffic Animation
+        function startTraffic(type, count = 1, interval = 500) {
+            if (packetAnimationInterval) clearInterval(packetAnimationInterval);
+
+            packetAnimationInterval = setInterval(() => {
+                for (let i = 0; i < count; i++) {
+                    createPacket(type, i * 100);
+                }
+            }, interval);
+        }
+
+        // Stop Traffic Animation
+        function stopTraffic() {
+            if (packetAnimationInterval) {
+                clearInterval(packetAnimationInterval);
+                packetAnimationInterval = null;
+            }
+        }
+
+        // Step Content
+        const stepContent = {
+            1: {
+                title: "Step 1: The Baseline (Normal Infrastructure)",
+                story: {
+                    title: "📖 The Simple Story",
+                    content: `Imagine a busy but well-managed restaurant during lunch hour. Customers walk in, place their orders at the counter, receive their food, and leave. The staff handles about 20-30 customers per hour smoothly. The phone lines are occasionally used for takeout orders, but nothing overwhelming. The kitchen has enough chefs working, and no one is waiting too long. This is what <span class="term-highlight">healthy normal traffic</span> looks like—predictable, manageable, and efficient.`
+                },
+                technical: {
+                    title: "⚙️ The Industry Mechanics",
+                    content: `In network infrastructure terms, your <span class="term-highlight">Target Server</span> is handling legitimate <span class="term-highlight">TCP connections</span> and <span class="term-highlight">HTTP requests</span> from real users. Each user's browser completes a full <span class="term-highlight">TCP 3-Way Handshake</span> (SYN → SYN-ACK → ACK) before exchanging data. The server's <span class="term-highlight">thread pool</span> (worker processes) is at 25% utilization, the <span class="term-highlight">SYN queue</span> (pending connections) is at 10%, and <span class="term-highlight">bandwidth</span> usage sits at a healthy 25%. All systems are operating within normal parameters with adequate headroom for traffic spikes.`
+                },
+                action: "Observe normal traffic patterns. The gauges show healthy utilization across all metrics.",
+                terminalCommands: ["status", "monitor --live", "netstat -an | grep ESTABLISHED"],
+                gaugeUpdates: [
+                    {id: 'cpuValue', bar: 'cpuBar', value: '20%', warning: false, critical: false},
+                    {id: 'bandwidthValue', bar: 'bandwidthBar', value: '25%', warning: false, critical: false},
+                    {id: 'connValue', bar: 'connBar', value: '150', warning: false, critical: false},
+                    {id: 'synValue', bar: 'synBar', value: '10%', warning: false, critical: false},
+                    {id: 'threadValue', bar: 'threadBar', value: '25%', warning: false, critical: false},
+                    {id: 'ppsValue', bar: 'ppsBar', value: '1.2K', warning: false, critical: false}
+                ]
+            },
+            2: {
+                title: "Step 2: The Setup (Botnet Command & Control)",
+                story: {
+                    title: "📖 The Simple Story",
+                    content: `Picture a criminal mastermind who has secretly taken control of thousands of smart devices worldwide—security cameras, smart TVs, home routers—by exploiting weak default passwords. They've created a hidden army of "zombie" devices. Now, they're sending out coded messages from a central headquarters (the <span class="term-highlight">C2 server</span>) to all these devices, telling them: "Wait for my signal. When I say 'attack,' you'll all call the victim's restaurant at exactly 3 PM." The accomplices don't know each other; they only listen to the mastermind.`
+                },
+                technical: {
+                    title: "⚙️ The Industry Mechanics",
+                    content: `This is <span class="term-highlight">Botnet C2 (Command & Control)</span> infrastructure. Attackers compromise IoT devices using malware like <span class="term-highlight">Mirai</span>, which scans for devices with factory-default credentials. Once infected, these devices become "bots" that connect back to the attacker's C2 server via IRC, HTTP, or P2P protocols. The C2 server maintains a roster of active bots (in this case, 15,847 nodes) and can issue synchronized commands. This distributed architecture makes the botnet resilient—if some bots go offline, thousands more remain ready. The attacker now has a weapon capable of generating massive traffic from geographically distributed sources, making it difficult to block.`
+                },
+                action: "Initialize the botnet. Watch as C2 commands propagate to zombie nodes.",
+                terminalCommands: ["botnet --scan", "infect --payload mirai", "c2 --connect", "nodes --list"],
+                gaugeUpdates: [
+                    {id: 'cpuValue', bar: 'cpuBar', value: '22%', warning: false, critical: false},
+                    {id: 'bandwidthValue', bar: 'bandwidthBar', value: '28%', warning: false, critical: false},
+                    {id: 'connValue', bar: 'connBar', value: '165', warning: false, critical: false},
+                    {id: 'synValue', bar: 'synBar', value: '12%', warning: false, critical: false},
+                    {id: 'threadValue', bar: 'threadBar', value: '27%', warning: false, critical: false},
+                    {id: 'ppsValue', bar: 'ppsBar', value: '1.4K', warning: false, critical: false}
+                ]
+            },
+            3: {
+                title: "Step 3: Transport Layer Attack (TCP SYN Flood)",
+                story: {
+                    title: "📖 The Simple Story",
+                    content: `Remember those thousands of accomplices? At exactly 3 PM, they all start calling the restaurant simultaneously. Each one says, "Hello, I'd like to place an order..." and then immediately hangs up—without ever giving their order or completing the call. The restaurant's phone lines are now completely tied up with these half-finished calls. Real customers can't get through because every line is waiting for someone who already hung up. The staff is frozen, holding phones to their ears, waiting for orders that will never come. This is a <span class="term-highlight">SYN Flood</span>—an attack that exhausts the server's connection queue.`
+                },
+                technical: {
+                    title: "⚙️ The Industry Mechanics",
+                    content: `The botnet initiates a <span class="term-highlight">Layer 4 (Transport Layer) SYN Flood</span> attack. Each bot sends TCP <span class="term-highlight">SYN packets</span> with <span class="term-highlight">spoofed source IP addresses</span> to the target server. The server responds with <span class="term-highlight">SYN-ACK</span> packets and allocates memory in its <span class="term-highlight">SYN queue</span> (also called the half-open connection queue) waiting for the final <span class="term-highlight">ACK</span> to complete the 3-way handshake. But the ACK never arrives—the source IPs are fake, and the real owners never sent the SYN. The queue fills to 100% capacity, causing <span class="term-highlight">state-table exhaustion</span>. Legitimate connection attempts are dropped because there's no room in the queue. CPU remains moderate, but the connection subsystem is completely saturated.`
+                },
+                action: "Execute SYN Flood attack. Observe the Connection Queue gauge spike to maximum.",
+                terminalCommands: ["attack --syn-flood --target 192.168.1.100", "spoof --random-ips", "rate --packets 50000/s", "status --syn-queue"],
+                gaugeUpdates: [
+                    {id: 'cpuValue', bar: 'cpuBar', value: '45%', warning: true, critical: false},
+                    {id: 'bandwidthValue', bar: 'bandwidthBar', value: '55%', warning: true, critical: false},
+                    {id: 'connValue', bar: 'connBar', value: '980', warning: false, critical: true},
+                    {id: 'synValue', bar: 'synBar', value: '100%', warning: false, critical: true},
+                    {id: 'threadValue', bar: 'threadBar', value: '40%', warning: false, critical: false},
+                    {id: 'ppsValue', bar: 'ppsBar', value: '48K', warning: false, critical: true}
+                ]
+            },
+            4: {
+                title: "Step 4: Network Layer Attack (UDP Reflection/Amplification)",
+                story: {
+                    title: "📖 The Simple Story",
+                    content: `The attacker escalates. Now, instead of calling directly, they send tiny postcards to public libraries worldwide. Each postcard has a fake return address—the victim restaurant's address—and says: "Please mail your entire 500-page encyclopedia collection to this address." The libraries (DNS resolvers) dutifully ship massive packages to the victim. The attacker only spent money on thousands of tiny postcards, but the victim receives truckloads of encyclopedias. Their mailbox overflows, the delivery room fills up, and they can't receive any real mail. This is <span class="term-highlight">UDP Amplification</span>—using public servers to multiply attack traffic.`
+                },
+                technical: {
+                    title: "⚙️ The Industry Mechanics",
+                    content: `This is a <span class="term-highlight">Layer 3 (Network Layer) UDP Reflection/Amplification</span> attack. The attacker sends small UDP packets with <span class="term-highlight">IP spoofing</span>—the source IP is forged to be the victim's address. These packets go to open <span class="term-highlight">DNS resolvers</span>, <span class="term-highlight">NTP servers</span>, or <span class="term-highlight">Memcached</span> instances with a request that generates a much larger response (e.g., "ANY" DNS query for a large domain). The amplification factor can be 50x-70x: a 60-byte query generates a 4000-byte response. All responses flood to the victim's IP, <span class="term-highlight">saturating the network pipe</span>. Bandwidth hits 100%, drowning out legitimate traffic. This attack is particularly devastating because the attacker's own bandwidth requirements are minimal.`
+                },
+                action: "Launch UDP Amplification attack. Watch the Bandwidth gauge max out as traffic multiplies.",
+                terminalCommands: ["attack --udp-amplify --dns", "spoof --src-ip 192.168.1.100", "query --type ANY --domain large-record.com", "amplification-factor 68x"],
+                gaugeUpdates: [
+                    {id: 'cpuValue', bar: 'cpuBar', value: '65%', warning: true, critical: false},
+                    {id: 'bandwidthValue', bar: 'bandwidthBar', value: '100%', warning: false, critical: true},
+                    {id: 'connValue', bar: 'connBar', value: '1200', warning: false, critical: true},
+                    {id: 'synValue', bar: 'synBar', value: '95%', warning: false, critical: true},
+                    {id: 'threadValue', bar: 'threadBar', value: '55%', warning: true, critical: false},
+                    {id: 'ppsValue', bar: 'ppsBar', value: '125K', warning: false, critical: true}
+                ]
+            },
+            5: {
+                title: "Step 5: Application Layer Attack (HTTP Slowloris)",
+                story: {
+                    title: "📖 The Simple Story",
+                    content: `The attacker changes tactics again. Now, just one person (or a few) walks into the restaurant and stands at the counter. They start ordering—but speak one syllable every 30 seconds. "I... would... like... the... grilled... cheese... sand...wich... with... to...ma...toes..." The cashier can't leave to help anyone else because this customer is technically still ordering. They're being polite and following the rules, but they're holding up the entire line indefinitely. Meanwhile, the attacker sends a few more people to do the same at other registers. Soon, all cashiers are stuck listening to slow-talkers, and real customers can't order. This is <span class="term-highlight">Slowloris</span>—a stealthy, low-bandwidth attack that exhausts server threads.`
+                },
+                technical: {
+                    title: "⚙️ The Industry Mechanics",
+                    content: `This is a <span class="term-highlight">Layer 7 (Application Layer) Slowloris</span> attack. The attacker opens HTTP connections to the web server and sends partial HTTP headers extremely slowly—perhaps one byte every few seconds. The server keeps these connections open, allocating a <span class="term-highlight">worker thread</span> from its thread pool to each one, waiting for the complete request. Modern web servers (Apache, Nginx) have a limited number of worker threads (often 150-1000). Once all threads are occupied with these slow, incomplete requests, the server cannot accept new legitimate connections. The attack is stealthy: bandwidth and CPU usage appear normal, but the <span class="term-highlight">Thread Pool</span> is at 100%. Traditional volume-based DDoS defenses miss this entirely because there's no traffic spike.`
+                },
+                action: "Deploy Slowloris attack. Observe Thread Pool max out while CPU/Bandwidth drop.",
+                terminalCommands: ["attack --slowloris --threads 500", "headers --incomplete --rate 1-byte/3s", "connections --keep-alive --timeout max", "target --workers exhaust"],
+                gaugeUpdates: [
+                    {id: 'cpuValue', bar: 'cpuBar', value: '35%', warning: false, critical: false},
+                    {id: 'bandwidthValue', bar: 'bandwidthBar', value: '30%', warning: false, critical: false},
+                    {id: 'connValue', bar: 'connBar', value: '500', warning: true, critical: false},
+                    {id: 'synValue', bar: 'synBar', value: '40%', warning: false, critical: false},
+                    {id: 'threadValue', bar: 'threadBar', value: '100%', warning: false, critical: true},
+                    {id: 'ppsValue', bar: 'ppsBar', value: '800', warning: false, critical: false}
+                ]
+            },
+            6: {
+                title: "Step 6: Enterprise Mitigation (BGP Anycast & Scrubbing)",
+                story: {
+                    title: "📖 The Simple Story",
+                    content: `The restaurant's corporate headquarters finally responds. They activate a massive security system: all roads leading to the restaurant now pass through a huge checkpoint before reaching the building. Security guards at this checkpoint inspect every single car (data packet). They have a list of known troublemakers (botnet IPs) and can spot suspicious behavior (incomplete orders, fake IDs). Bad cars are turned away immediately. Real customers with valid orders are waved through quickly. The restaurant can finally operate normally again because the bad traffic is filtered out before it overwhelms the staff. This is <span class="term-highlight">Cloud Scrubbing</span>—a defensive shield that cleans traffic before it hits your servers.`
+                },
+                technical: {
+                    title: "⚙️ The Industry Mechanics",
+                    content: `Enterprise DDoS defense uses <span class="term-highlight">BGP Anycast</span> routing and <span class="term-highlight">Cloud Scrubbing Centers</span>. When an attack is detected, DNS records are updated to route traffic through a global <span class="term-highlight">CDN</span> with scrubbing capacity (e.g., Cloudflare, Akamai, AWS Shield). BGP Anycast announces the same IP prefix from multiple data centers worldwide, distributing attack traffic geographically. At the scrubbing center, multiple techniques filter malicious packets: <span class="term-highlight">SYN cookies</span> prevent SYN queue exhaustion, <span class="term-highlight">rate limiting</span> caps requests per IP, <span class="term-highlight">IP reputation databases</span> block known botnet addresses, and <span class="term-highlight">Web Application Firewalls (WAF)</span> inspect HTTP requests for attack patterns. Clean traffic is forwarded to the origin server via a secure tunnel. The target server sees only legitimate traffic, and all gauges return to normal.`
+                },
+                action: "Enable Cloud Scrubbing. Watch as malicious packets are filtered and gauges normalize.",
+                terminalCommands: ["mitigation --enable --scrubbing", "bgp --anycast activate", "waf --rules strict", "rate-limit --threshold 1000/s"],
+                gaugeUpdates: [
+                    {id: 'cpuValue', bar: 'cpuBar', value: '25%', warning: false, critical: false},
+                    {id: 'bandwidthValue', bar: 'bandwidthBar', value: '30%', warning: false, critical: false},
+                    {id: 'connValue', bar: 'connBar', value: '180', warning: false, critical: false},
+                    {id: 'synValue', bar: 'synBar', value: '15%', warning: false, critical: false},
+                    {id: 'threadValue', bar: 'threadBar', value: '30%', warning: false, critical: false},
+                    {id: 'ppsValue', bar: 'ppsBar', value: '2.5K', warning: false, critical: false}
+                ]
+            }
+        };
+
+        // Render Step Content
+        function renderStep(step) {
+            const content = stepContent[step];
+            const container = document.getElementById('stepContent');
+
+            let html = `
+                <h2 style="color: var(--accent-blue); margin-bottom: 20px; font-size: 1.6rem;">${content.title}</h2>
+
+                <div class="dual-lens">
+                    <div class="lens-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                        ${content.story.title}
+                    </div>
+                    <div class="lens-content story">
+                        <h3>🍽️ Everyday Analogy</h3>
+                        <p>${content.story.content}</p>
+                    </div>
+                </div>
+
+                <div class="dual-lens">
+                    <div class="lens-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m15.364-6.364l-4.243 4.243m-4.242 0L3.636 5.636m12.728 12.728l-4.243-4.243m-4.242 0L5.636 18.364"/>
+                        </svg>
+                        ${content.technical.title}
+                    </div>
+                    <div class="lens-content technical">
+                        <h3>🔧 Technical Deep Dive</h3>
+                        <p>${content.technical.content}</p>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4>🎯 Your Action</h4>
+                    <p>${content.action}</p>
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // Update step indicators
+            document.querySelectorAll('.step-dot').forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index + 1 < step) {
+                    dot.classList.add('completed');
+                } else if (index + 1 === step) {
+                    dot.classList.add('active');
+                }
+            });
+
+            // Update progress
+            const progress = (step / 6) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `Step ${step} of 6: ${content.title.split('(')[1].replace(')', '')}`;
+
+            // Update gauges
+            content.gaugeUpdates.forEach(update => {
+                updateGauge(update.id, update.bar, update.value, update.warning, update.critical);
+            });
+
+            // Update control panel
+            updateControlPanel(step);
+        }
+
+        // Update Control Panel
+        function updateControlPanel(step) {
+            const panel = document.getElementById('controlPanel');
+            const mitigation = document.getElementById('mitigationToggle');
+
+            if (step === 1) {
+                panel.innerHTML = '<button class="btn btn-primary" onclick="nextStep()">Next Step →</button>';
+                mitigation.classList.add('hidden');
+            } else if (step === 2) {
+                panel.innerHTML = `
+                    <button class="btn btn-secondary" onclick="executeCommand('botnet')">Initialize Botnet</button>
+                    <button class="btn btn-primary" onclick="nextStep()">Next Step →</button>
+                `;
+                mitigation.classList.add('hidden');
+            } else if (step === 3) {
+                panel.innerHTML = `
+                    <button class="btn btn-danger" onclick="executeAttack('syn')">🔥 Launch SYN Flood</button>
+                    <button class="btn btn-primary" onclick="nextStep()">Next Step →</button>
+                `;
+                mitigation.classList.add('hidden');
+            } else if (step === 4) {
+                panel.innerHTML = `
+                    <button class="btn btn-danger" onclick="executeAttack('udp')">⚡ Execute UDP Amplification</button>
+                    <button class="btn btn-primary" onclick="nextStep()">Next Step →</button>
+                `;
+                mitigation.classList.add('hidden');
+            } else if (step === 5) {
+                panel.innerHTML = `
+                    <button class="btn btn-danger" onclick="executeAttack('slowloris')">🐌 Deploy Slowloris</button>
+                    <button class="btn btn-primary" onclick="nextStep()">Next Step →</button>
+                `;
+                mitigation.classList.add('hidden');
+            } else if (step === 6) {
+                panel.innerHTML = `
+                    <button class="btn btn-secondary" onclick="resetSimulation()">↺ Reset Simulation</button>
+                `;
+                mitigation.classList.remove('hidden');
+            }
+        }
+
+        // Execute Commands
+        function executeCommand(type) {
+            const commands = stepContent[currentStep].terminalCommands;
+
+            if (type === 'botnet') {
+                addTerminalLine(commands[0], 'command');
+                setTimeout(() => addTerminalLine('[SUCCESS] Scanning for vulnerable IoT devices...', 'success'), 300);
+                setTimeout(() => addTerminalLine(`[SUCCESS] ${Math.floor(Math.random() * 5000 + 10000)} devices compromised`, 'success'), 800);
+                setTimeout(() => addTerminalLine(commands[2], 'command'), 1200);
+                setTimeout(() => addTerminalLine('[SUCCESS] C2 channel established with all nodes', 'success'), 1700);
+                setTimeout(() => addTerminalLine('[SYSTEM] Botnet ready. Awaiting attack orders...', 'system'), 2200);
+            }
+        }
+
+        // Execute Attacks
+        function executeAttack(type) {
+            const commands = stepContent[currentStep].terminalCommands;
+
+            addTerminalLine(commands[0], 'command');
+
+            if (type === 'syn') {
+                setTimeout(() => addTerminalLine('[ATTACK] SYN Flood initiated...', 'error'), 300);
+                setTimeout(() => addTerminalLine('[ATTACK] Spoofing source IPs...', 'error'), 600);
+                setTimeout(() => addTerminalLine(`[ATTACK] Flooding at ${commands[2].split(' ')[2]} packets/sec`, 'error'), 1000);
+                startTraffic('attack', 3, 100);
+
+                setTimeout(() => {
+                    document.getElementById('serverStatus1').setAttribute('fill', '#ff4757');
+                    document.getElementById('serverStatus2').setAttribute('fill', '#ff4757');
+                    document.getElementById('serverStatus3').setAttribute('fill', '#fbbf24');
+                }, 1500);
+            } else if (type === 'udp') {
+                setTimeout(() => addTerminalLine('[ATTACK] UDP Amplification via DNS resolvers...', 'error'), 300);
+                setTimeout(() => addTerminalLine('[ATTACK] Spoofing victim IP as source...', 'error'), 600);
+                setTimeout(() => addTerminalLine(`[ATTACK] Amplification factor: ${commands[3].split(' ')[1]}`, 'error'), 1000);
+                startTraffic('amplified', 5, 80);
+
+                setTimeout(() => {
+                    document.getElementById('serverStatus1').setAttribute('fill', '#ff4757');
+                    document.getElementById('serverStatus2').setAttribute('fill', '#ff4757');
+                    document.getElementById('serverStatus3').setAttribute('fill', '#ff4757');
+                }, 1500);
+            } else if (type === 'slowloris') {
+                setTimeout(() => addTerminalLine('[ATTACK] Slowloris L7 attack deployed...', 'error'), 300);
+                setTimeout(() => addTerminalLine('[ATTACK] Opening 500 persistent HTTP connections...', 'error'), 600);
+                setTimeout(() => addTerminalLine('[ATTACK] Sending partial headers at 1 byte/3s...', 'error'), 1000);
+                startTraffic('attack', 1, 800);
+
+                setTimeout(() => {
+                    document.getElementById('serverStatus1').setAttribute('fill', '#fbbf24');
+                    document.getElementById('serverStatus2').setAttribute('fill', '#ff4757');
+                    document.getElementById('serverStatus3').setAttribute('fill', '#fbbf24');
+                }, 1500);
+            }
+        }
+
+        // Toggle Mitigation
+        function toggleMitigation() {
+            const checkbox = document.getElementById('mitigationToggle');
+            isMitigationActive = checkbox.checked;
+
+            const shield = document.getElementById('mitigationShield');
+            const terminalStatus = document.getElementById('terminalStatus');
+
+            if (isMitigationActive) {
+                shield.classList.add('active');
+                terminalStatus.textContent = '● MITIGATION ACTIVE';
+                terminalStatus.style.color = '#22c55e';
+
+                addTerminalLine('[DEFENSE] Cloud Scrubbing enabled', 'success');
+                addTerminalLine('[DEFENSE] BGP Anycast routing activated', 'success');
+                addTerminalLine('[DEFENSE] WAF rules: STRICT mode', 'success');
+                addTerminalLine('[DEFENSE] Filtering malicious traffic...', 'system');
+
+                stopTraffic();
+                startTraffic('legitimate', 2, 400);
+
+                setTimeout(() => {
+                    document.getElementById('serverStatus1').setAttribute('fill', '#22c55e');
+                    document.getElementById('serverStatus2').setAttribute('fill', '#22c55e');
+                    document.getElementById('serverStatus3').setAttribute('fill', '#22c55e');
+                }, 1000);
+            } else {
+                shield.classList.remove('active');
+                terminalStatus.textContent = '● ONLINE';
+                terminalStatus.style.color = '#22c55e';
+
+                addTerminalLine('[DEFENSE] Cloud Scrubbing disabled', 'error');
+                addTerminalLine('[WARNING] Origin server exposed to attacks', 'error');
+
+                stopTraffic();
+                startTraffic('attack', 3, 150);
+            }
+        }
+
+        // Next Step
+        function nextStep() {
+            if (currentStep < 6) {
+                currentStep++;
+                stopTraffic();
+
+                if (currentStep === 1) {
+                    startTraffic('legitimate', 1, 600);
+                } else if (currentStep === 2) {
+                    startTraffic('legitimate', 1, 500);
+                } else if (currentStep === 6 && !isMitigationActive) {
+                    startTraffic('attack', 3, 150);
+                }
+
+                renderStep(currentStep);
+            }
+        }
+
+        // Reset Simulation
+        function resetSimulation() {
+            currentStep = 1;
+            isMitigationActive = false;
+            stopTraffic();
+
+            document.getElementById('mitigationToggle').checked = false;
+            document.getElementById('terminalOutput').innerHTML = `
+                <div class="terminal-line system">[SYSTEM] C2 Server initialized...</div>
+                <div class="terminal-line system">[SYSTEM] Botnet nodes: 15,847 active</div>
+                <div class="terminal-line system">[SYSTEM] Ready for commands...</div>
+            `;
+
+            document.querySelectorAll('.step-dot').forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index === 0) dot.classList.add('active');
+            });
+
+            renderStep(1);
+            startTraffic('legitimate', 1, 600);
+        }
+
+        // Terminal Input Handler
+        document.getElementById('terminalInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const input = this.value.trim();
+                if (input) {
+                    addTerminalLine(`root@c2:~# ${input}`, 'command');
+
+                    // Simulate command responses
+                    setTimeout(() => {
+                        if (input.includes('help')) {
+                            addTerminalLine('Available commands: status, attack, scan, infect, mitigate', 'system');
+                        } else if (input.includes('status')) {
+                            addTerminalLine(`[STATUS] Active bots: 15847 | Attack mode: ${currentStep > 2 ? 'ACTIVE' : 'STANDBY'}`, 'system');
+                        } else if (input.includes('scan')) {
+                            addTerminalLine('[SCAN] Searching for vulnerable devices...', 'system');
+                            setTimeout(() => addTerminalLine(`[SCAN] Found ${Math.floor(Math.random() * 1000 + 500)} new targets`, 'success'), 1000);
+                        } else {
+                            addTerminalLine(`[ERROR] Unknown command: ${input}`, 'error');
+                            addTerminalLine('Type "help" for available commands', 'system');
+                        }
+                    }, 300);
+
+                    this.value = '';
+                }
+            }
+        });
+
+        // Initialize
+        renderStep(1);
+        startTraffic('legitimate', 1, 600);
+    </script>
+</body>
+</html>
